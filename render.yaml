@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: sistema-controle-de-acesso
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    rootDir: crv-acesso
