@@ -1,0 +1,326 @@
+/* ============================================================
+   CREDENCIAIS — credenciais.css
+   ============================================================ */
+
+/* ---- Abas ---- */
+.cred-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+  border-bottom: 2px solid var(--border);
+}
+
+.cred-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 18px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  font-size: 0.83rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color var(--transition), border-color var(--transition);
+  white-space: nowrap;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+}
+
+.cred-tab:hover {
+  color: var(--text-primary);
+  background: var(--surface-2);
+}
+
+.cred-tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+  background: rgba(0, 145, 173, 0.05);
+}
+
+/* ---- Tabela: linha com avatar ---- */
+.cred-row-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: white;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 2px solid var(--border);
+}
+
+.cred-row-nome {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.cred-row-sub {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+/* ---- Badge de tipo de credencial ---- */
+.cred-tipo-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  border: 1px solid;
+}
+
+.cred-tipo-badge.cartao {
+  background: rgba(0, 145, 173, 0.08);
+  color: var(--primary);
+  border-color: rgba(0, 145, 173, 0.25);
+}
+
+.cred-tipo-badge.biometria {
+  background: rgba(34, 197, 94, 0.08);
+  color: var(--success);
+  border-color: rgba(34, 197, 94, 0.25);
+}
+
+.cred-tipo-badge.facial {
+  background: rgba(139, 92, 246, 0.08);
+  color: #8b5cf6;
+  border-color: rgba(139, 92, 246, 0.25);
+}
+
+.cred-tipo-badge.senha {
+  background: rgba(255, 210, 63, 0.1);
+  color: #b45309;
+  border-color: rgba(255, 210, 63, 0.35);
+}
+
+/* ---- Grid de tipos no modal ---- */
+.cred-tipo-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.cred-tipo-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 12px;
+  background: var(--surface-2);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: border-color var(--transition), color var(--transition),
+              background var(--transition), box-shadow var(--transition);
+  text-align: center;
+}
+
+.cred-tipo-item .ph {
+  font-size: 1.6rem;
+  transition: color var(--transition);
+}
+
+.cred-tipo-item:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(0, 145, 173, 0.05);
+}
+
+.cred-tipo-item:hover .ph {
+  color: var(--primary);
+}
+
+.cred-tipo-item.selected {
+  border-color: var(--primary);
+  background: rgba(0, 145, 173, 0.1);
+  color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(0, 145, 173, 0.15);
+}
+
+.cred-tipo-item.selected .ph {
+  color: var(--primary);
+}
+
+/* ---- Campos dinâmicos ---- */
+.cred-campos-section {
+  padding: 16px;
+  background: var(--surface-2);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  margin-top: 4px;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ---- Aviso biometria ---- */
+.cred-bio-aviso {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  background: rgba(0, 145, 173, 0.05);
+  border: 1px solid rgba(0, 145, 173, 0.2);
+  border-radius: var(--radius-md);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+.cred-bio-aviso .ph {
+  font-size: 1.3rem;
+  color: var(--info);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ---- Card de credencial (alternativa à tabela) ---- */
+.cred-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.cred-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: box-shadow var(--transition), border-color var(--transition);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.cred-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--primary);
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+
+.cred-card:hover {
+  border-color: var(--primary);
+  box-shadow: var(--shadow-md);
+}
+
+.cred-card:hover::after {
+  opacity: 1;
+}
+
+.cred-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cred-card-tipo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.cred-card-tipo .ph {
+  font-size: 1.1rem;
+}
+
+.cred-card-body {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cred-card-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: white;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  font-size: 0.88rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 2px solid var(--border);
+}
+
+.cred-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.cred-card-nome {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cred-card-meta {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.cred-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+/* ---- Validade com alerta ---- */
+.cred-validade-ok      { color: var(--success); font-weight: 500; }
+.cred-validade-aviso   { color: var(--warning); font-weight: 500; }
+.cred-validade-expirada{ color: var(--danger);  font-weight: 500; }
+
+/* ---- Responsivo ---- */
+@media (max-width: 768px) {
+  .cred-tipo-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .cred-tabs {
+    overflow-x: auto;
+    padding-bottom: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .cred-tipo-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

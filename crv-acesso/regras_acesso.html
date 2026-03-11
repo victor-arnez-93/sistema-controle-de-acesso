@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Regras de Acesso — CRV Controle de Acesso</title>
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <link rel="stylesheet" href="static/css/main.css">
+  <link rel="stylesheet" href="static/css/regras_acesso.css">
+</head>
+<body>
+
+<div class="app-wrapper" id="app-wrapper">
+  <div id="sidebar-container"></div>
+  <div id="header-container"></div>
+
+  <main class="main-content">
+
+    <!-- Cabeçalho -->
+    <div class="page-header">
+      <div>
+        <h2 class="page-title">Regras de Acesso</h2>
+        <p class="text-sm text-muted mt-1">Horários, grupos e permissões por área</p>
+      </div>
+      <div class="flex gap-2">
+        <button class="btn btn-ghost btn-sm">
+          <i class="ph ph-download-simple"></i> Exportar
+        </button>
+        <button class="btn btn-primary btn-sm" id="btn-nova-regra">
+          <i class="ph ph-plus"></i> Nova Regra
+        </button>
+      </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:20px;">
+
+      <div class="kpi-card">
+        <div class="flex items-center justify-between">
+          <span class="kpi-label">Regras ativas</span>
+          <i class="ph ph-shield-check kpi-icon" style="color:var(--success);"></i>
+        </div>
+        <div class="kpi-value">—</div>
+        <div class="kpi-sub">em vigor</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="flex items-center justify-between">
+          <span class="kpi-label">Grupos</span>
+          <i class="ph ph-users-three kpi-icon" style="color:var(--primary);"></i>
+        </div>
+        <div class="kpi-value">—</div>
+        <div class="kpi-sub">grupos configurados</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="flex items-center justify-between">
+          <span class="kpi-label">Áreas restritas</span>
+          <i class="ph ph-lock kpi-icon" style="color:var(--danger);"></i>
+        </div>
+        <div class="kpi-value">—</div>
+        <div class="kpi-sub">zonas controladas</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="flex items-center justify-between">
+          <span class="kpi-label">Exceções</span>
+          <i class="ph ph-warning kpi-icon" style="color:var(--warning);"></i>
+        </div>
+        <div class="kpi-value">—</div>
+        <div class="kpi-sub">regras com exceção</div>
+      </div>
+
+    </div>
+
+    <!-- Abas -->
+    <div class="cred-tabs">
+      <button class="cred-tab active" data-tab="regras">
+        <i class="ph ph-shield"></i> Regras
+      </button>
+      <button class="cred-tab" data-tab="grupos">
+        <i class="ph ph-users-three"></i> Grupos
+      </button>
+      <button class="cred-tab" data-tab="horarios">
+        <i class="ph ph-clock"></i> Horários
+      </button>
+      <button class="cred-tab" data-tab="areas">
+        <i class="ph ph-map-pin"></i> Áreas
+      </button>
+    </div>
+
+    <!-- Painel: Regras -->
+    <div id="tab-regras">
+
+      <div class="card mb-4">
+        <div class="func-filtros">
+          <div class="input-icon-wrap func-busca">
+            <i class="ph ph-magnifying-glass input-icon"></i>
+            <input type="text" class="form-control" placeholder="Buscar regra, grupo ou área...">
+          </div>
+          <select class="form-control func-select">
+            <option value="">Todos os tipos</option>
+            <option>Horário</option>
+            <option>Área</option>
+            <option>Grupo</option>
+            <option>Exceção</option>
+          </select>
+          <select class="form-control func-select">
+            <option value="">Todos os status</option>
+            <option>Ativa</option>
+            <option>Inativa</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title"><i class="ph ph-shield"></i> Lista de Regras</span>
+          <span class="text-sm text-muted">0 regras</span>
+        </div>
+
+        <!-- Estado vazio -->
+        <div class="func-empty">
+          <i class="ph ph-shield"></i>
+          <h3>Nenhuma regra configurada</h3>
+          <p>Crie regras de acesso para controlar quem pode entrar em cada área e em quais horários.</p>
+          <div class="flex gap-2 justify-center mt-4">
+            <button class="btn btn-primary" id="btn-nova-regra-empty">
+              <i class="ph ph-plus"></i> Nova Regra
+            </button>
+          </div>
+        </div>
+
+        <!-- Tabela (oculta até ter dados) -->
+        <div class="table-wrapper func-table-hidden">
+          <table>
+            <thead>
+              <tr>
+                <th>Nome da Regra</th>
+                <th>Tipo</th>
+                <th>Grupo</th>
+                <th>Área</th>
+                <th>Horário</th>
+                <th>Prioridade</th>
+                <th>Status</th>
+                <th style="width:100px;">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Linhas injetadas via backend -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Painel: Grupos (oculto) -->
+    <div id="tab-grupos" class="regra-tab-hidden">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title"><i class="ph ph-users-three"></i> Grupos de Acesso</span>
+          <button class="btn btn-primary btn-sm">
+            <i class="ph ph-plus"></i> Novo Grupo
+          </button>
+        </div>
+        <div class="func-empty">
+          <i class="ph ph-users-three"></i>
+          <h3>Nenhum grupo criado</h3>
+          <p>Grupos permitem aplicar regras a múltiplos funcionários de uma vez.</p>
+          <button class="btn btn-primary mt-4">
+            <i class="ph ph-plus"></i> Criar Grupo
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Painel: Horários (oculto) -->
+    <div id="tab-horarios" class="regra-tab-hidden">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title"><i class="ph ph-clock"></i> Faixas de Horário</span>
+          <button class="btn btn-primary btn-sm">
+            <i class="ph ph-plus"></i> Nova Faixa
+          </button>
+        </div>
+        <div class="func-empty">
+          <i class="ph ph-clock"></i>
+          <h3>Nenhuma faixa configurada</h3>
+          <p>Configure períodos de acesso permitido como manhã, tarde, noite ou horário especial.</p>
+          <button class="btn btn-primary mt-4">
+            <i class="ph ph-plus"></i> Criar Faixa
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Painel: Áreas (oculto) -->
+    <div id="tab-areas" class="regra-tab-hidden">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title"><i class="ph ph-map-pin"></i> Áreas Controladas</span>
+          <button class="btn btn-primary btn-sm">
+            <i class="ph ph-plus"></i> Nova Área
+          </button>
+        </div>
+        <div class="func-empty">
+          <i class="ph ph-map-pin"></i>
+          <h3>Nenhuma área cadastrada</h3>
+          <p>Cadastre as zonas físicas monitoradas como portão principal, refeitório, sala de servidores, etc.</p>
+          <button class="btn btn-primary mt-4">
+            <i class="ph ph-plus"></i> Cadastrar Área
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Modal: Nova Regra -->
+<div class="modal-overlay func-table-hidden" id="modal-regra">
+  <div class="modal">
+
+    <div class="modal-header">
+      <h3 class="modal-title">
+        <i class="ph ph-shield-plus"></i> Nova Regra de Acesso
+      </h3>
+      <button class="modal-close" id="modal-fechar">
+        <i class="ph ph-x"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+
+      <div class="form-group">
+        <label class="form-label">Nome da regra <span class="form-required">*</span></label>
+        <input type="text" class="form-control" placeholder="Ex: Acesso operacional — manhã">
+      </div>
+
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label class="form-label">Tipo <span class="form-required">*</span></label>
+          <select class="form-control">
+            <option value="">Selecione...</option>
+            <option>Horário</option>
+            <option>Área</option>
+            <option>Grupo</option>
+            <option>Exceção</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Prioridade</label>
+          <select class="form-control">
+            <option>Normal</option>
+            <option>Alta</option>
+            <option>Crítica</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="modal-section-title">Aplicar a</div>
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label class="form-label">Grupo de acesso</label>
+          <select class="form-control">
+            <option value="">Selecione o grupo...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Área</label>
+          <select class="form-control">
+            <option value="">Selecione a área...</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="modal-section-title">Horário permitido</div>
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label class="form-label">Hora início</label>
+          <input type="time" class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Hora fim</label>
+          <input type="time" class="form-control">
+        </div>
+      </div>
+
+      <div class="modal-section-title">Dias da semana</div>
+      <div class="regra-dias-wrap">
+        <label class="regra-dia"><input type="checkbox" checked> Seg</label>
+        <label class="regra-dia"><input type="checkbox" checked> Ter</label>
+        <label class="regra-dia"><input type="checkbox" checked> Qua</label>
+        <label class="regra-dia"><input type="checkbox" checked> Qui</label>
+        <label class="regra-dia"><input type="checkbox" checked> Sex</label>
+        <label class="regra-dia"><input type="checkbox"> Sáb</label>
+        <label class="regra-dia"><input type="checkbox"> Dom</label>
+      </div>
+
+      <div class="form-group mt-3">
+        <label class="form-label">Observação</label>
+        <textarea class="form-control" rows="2" placeholder="Descrição ou justificativa desta regra..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select class="form-control">
+          <option>Ativa</option>
+          <option>Inativa</option>
+        </select>
+      </div>
+
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="btn-cancelar">Cancelar</button>
+      <button class="btn btn-primary" id="btn-salvar">
+        <i class="ph ph-floppy-disk"></i> Salvar Regra
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<script src="static/js/main.js"></script>
+<script src="static/js/regras_acesso.js"></script>
+</body>
+</html>

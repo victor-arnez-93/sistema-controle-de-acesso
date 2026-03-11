@@ -36,3 +36,17 @@ function initToggleSenha() {
     icon.className = isPass ? 'ph ph-eye-slash' : 'ph ph-eye';
   });
 }
+
+// Navegação simples para telas sem sidebar
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-href]');
+  if (!el) return;
+  e.preventDefault();
+  const rotas = {
+  'dashboard':        'dashboard.html',
+  'recuperacao_senha':'recuperacao_senha.html',
+  'login':            'login.html'
+};
+  const rota = rotas[el.dataset.href];
+  if (rota) window.location.href = rota;
+});

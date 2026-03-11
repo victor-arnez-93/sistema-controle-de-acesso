@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monitoramento — CRV Controle de Acesso</title>
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <link rel="stylesheet" href="static/css/main.css">
+  <link rel="stylesheet" href="static/css/monitoramento.css">
+</head>
+<body>
+
+<div class="app-wrapper" id="app-wrapper">
+  <div id="sidebar-container"></div>
+  <div id="header-container"></div>
+
+  <main class="main-content">
+
+    <!-- Cabeçalho -->
+    <div class="page-header">
+      <div>
+        <h2 class="page-title">Monitoramento</h2>
+        <p class="text-sm text-muted mt-1">Eventos ao vivo — atualização em tempo real</p>
+      </div>
+      <div class="flex gap-2">
+        <div class="monitor-status-badge" id="ws-status">
+          <span class="monitor-pulse"></span>
+          <span id="ws-label">Conectado</span>
+        </div>
+        <button class="btn btn-ghost btn-sm" id="btn-pausar">
+          <i class="ph ph-pause"></i> Pausar
+        </button>
+        <button class="btn btn-primary btn-sm">
+          <i class="ph ph-funnel"></i> Filtros
+        </button>
+      </div>
+    </div>
+
+    <!-- KPIs rápidos -->
+    <div class="kpi-grid monitor-kpis">
+
+      <div class="kpi-card">
+        <div class="flex items-center justify-between">
+          <span class="kpi-label">Presentes agora</span>
+          <i class="ph ph-users kpi-icon" style="color:var(--success);"></i>
+        </div>
+        <div class="kpi-value" id="kpi-presentes">342</div>
+        <div class="kpi-sub">funcionários no local</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="flex items-center justify-between">
+          <span class="kpi-label">Eventos hoje</span>
+          <i class="ph ph-activity kpi-icon" style="color:var(--primary);"></i>
+        </div>
+        <div class="kpi-value" id="kpi-eventos">436</div>
+        <div class="kpi-sub">entradas e saídas</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="flex items-center justify-between">
+          <span class="kpi-label">Negados hoje</span>
+          <i class="ph ph-x-circle kpi-icon" style="color:var(--danger);"></i>
+        </div>
+        <div class="kpi-value" id="kpi-negados">8</div>
+        <div class="kpi-sub">tentativas bloqueadas</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="flex items-center justify-between">
+          <span class="kpi-label">Alertas ativos</span>
+          <i class="ph ph-warning kpi-icon" style="color:var(--warning);"></i>
+        </div>
+        <div class="kpi-value" id="kpi-alertas">5</div>
+        <div class="kpi-sub">aguardando ação</div>
+      </div>
+
+    </div>
+
+    <!-- Grid principal -->
+    <div class="monitor-grid">
+
+      <!-- Feed ao vivo -->
+      <div class="card monitor-feed-card">
+        <div class="card-header">
+          <span class="card-title">
+            <i class="ph ph-broadcast"></i> Feed ao vivo
+          </span>
+          <div class="flex gap-2">
+            <select class="form-control" style="width:auto;font-size:0.78rem;" id="filtro-tipo">
+              <option value="">Todos os eventos</option>
+              <option value="liberado">Liberados</option>
+              <option value="negado">Negados</option>
+              <option value="alerta">Alertas</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="monitor-feed" id="monitor-feed">
+          <!-- Eventos injetados via JS -->
+          <div class="monitor-empty">
+            <i class="ph ph-broadcast"></i>
+            <span>Aguardando eventos...</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Painel direito -->
+      <div class="monitor-side">
+
+        <!-- Status catracas -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title"><i class="ph ph-git-branch"></i> Catracas</span>
+            <span class="badge badge-success" id="badge-catracas">4/4 Online</span>
+          </div>
+          <div class="monitor-catracas" id="monitor-catracas">
+
+            <div class="catraca-item" data-id="1">
+              <div class="catraca-info">
+                <span class="catraca-dot online"></span>
+                <div>
+                  <div class="catraca-nome">Portão Principal — Entrada</div>
+                  <div class="catraca-meta">Último evento: agora</div>
+                </div>
+              </div>
+              <div class="flex gap-1">
+                <button class="btn btn-ghost btn-sm btn-icon" title="Liberar passagem">
+                  <i class="ph ph-door-open"></i>
+                </button>
+                <button class="btn btn-ghost btn-sm btn-icon" title="Ver logs">
+                  <i class="ph ph-list-magnifying-glass"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="catraca-item" data-id="2">
+              <div class="catraca-info">
+                <span class="catraca-dot online"></span>
+                <div>
+                  <div class="catraca-nome">Portão Principal — Saída</div>
+                  <div class="catraca-meta">Último evento: 2min atrás</div>
+                </div>
+              </div>
+              <div class="flex gap-1">
+                <button class="btn btn-ghost btn-sm btn-icon" title="Liberar passagem">
+                  <i class="ph ph-door-open"></i>
+                </button>
+                <button class="btn btn-ghost btn-sm btn-icon" title="Ver logs">
+                  <i class="ph ph-list-magnifying-glass"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="catraca-item" data-id="3">
+              <div class="catraca-info">
+                <span class="catraca-dot online"></span>
+                <div>
+                  <div class="catraca-nome">Portão Lateral A</div>
+                  <div class="catraca-meta">Último evento: 5min atrás</div>
+                </div>
+              </div>
+              <div class="flex gap-1">
+                <button class="btn btn-ghost btn-sm btn-icon" title="Liberar passagem">
+                  <i class="ph ph-door-open"></i>
+                </button>
+                <button class="btn btn-ghost btn-sm btn-icon" title="Ver logs">
+                  <i class="ph ph-list-magnifying-glass"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="catraca-item" data-id="4">
+              <div class="catraca-info">
+                <span class="catraca-dot online"></span>
+                <div>
+                  <div class="catraca-nome">Portão Lateral B</div>
+                  <div class="catraca-meta">Último evento: 8min atrás</div>
+                </div>
+              </div>
+              <div class="flex gap-1">
+                <button class="btn btn-ghost btn-sm btn-icon" title="Liberar passagem">
+                  <i class="ph ph-door-open"></i>
+                </button>
+                <button class="btn btn-ghost btn-sm btn-icon" title="Ver logs">
+                  <i class="ph ph-list-magnifying-glass"></i>
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Último acesso destacado -->
+        <div class="card monitor-last-card" id="ultimo-acesso">
+          <div class="card-header">
+            <span class="card-title"><i class="ph ph-user-focus"></i> Último acesso</span>
+          </div>
+          <div class="monitor-last-empty" id="last-empty">
+            <i class="ph ph-user-circle"></i>
+            <span>Nenhum evento ainda</span>
+          </div>
+          <div class="monitor-last-content rec-hidden" id="last-content">
+            <div class="monitor-last-avatar" id="last-avatar">--</div>
+            <div class="monitor-last-info">
+              <div class="monitor-last-nome" id="last-nome">—</div>
+              <div class="monitor-last-meta" id="last-meta">—</div>
+              <div class="monitor-last-badges" id="last-badges"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="static/js/main.js"></script>
+<script src="static/js/monitoramento.js"></script>
+</body>
+</html>

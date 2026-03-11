@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initClock();
     initSidebar();
     setActivePage();
+    initNavegacao();
   });
 });
 
@@ -198,3 +199,43 @@ toastStyle.textContent = `
   }
 `;
 document.head.appendChild(toastStyle);
+
+
+/* ------------------------------------------------------------
+   NAVEGAÇÃO — mapeia sidebar e botões para suas páginas
+   ------------------------------------------------------------ */
+
+const ROTAS = {
+  'dashboard':     'dashboard.html',
+  'monitoramento': 'monitoramento.html',
+  'funcionarios':  'funcionarios.html',
+  'credenciais':   'credenciais.html',
+  'regras_acesso': 'regras_acesso.html',
+  'equipamentos':  'equipamentos.html',
+  'ocorrencias':   'ocorrencias.html',
+  'relatorios':    'relatorios.html',
+  'auditoria':     'auditoria.html',
+  'configuracoes': 'configuracoes.html',
+};
+
+function initNavegacao() {
+  // Sidebar — já funciona pelos href nos <a>, mas garante via JS também
+  document.querySelectorAll('.sidebar-item[data-page]').forEach(item => {
+    item.addEventListener('click', (e) => {
+      const rota = ROTAS[item.dataset.page];
+      if (rota) {
+        e.preventDefault();
+        window.location.href = rota;
+      }
+    });
+  });
+
+  // Qualquer botão/link com data-href="nome-da-pagina"
+  document.addEventListener('click', (e) => {
+    const el = e.target.closest('[data-href]');
+    if (!el) return;
+    e.preventDefault();
+    const rota = ROTAS[el.dataset.href];
+    if (rota) window.location.href = rota;
+  });
+}

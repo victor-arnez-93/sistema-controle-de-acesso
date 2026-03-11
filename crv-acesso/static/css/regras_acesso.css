@@ -1,0 +1,382 @@
+/* ============================================================
+   REGRAS DE ACESSO — regras_acesso.css
+   ============================================================ */
+
+/* ---- Painel de abas ---- */
+.regra-tab-hidden {
+  display: none;
+}
+
+/* ---- KPI cards com borda colorida ---- */
+.regra-kpi-ativa  { border-top: 3px solid var(--success); }
+.regra-kpi-grupos { border-top: 3px solid var(--primary); }
+.regra-kpi-areas  { border-top: 3px solid var(--danger);  }
+.regra-kpi-exc    { border-top: 3px solid var(--warning); }
+
+/* ---- Filtros ---- */
+.regra-filtros {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.regra-busca {
+  flex: 1;
+  min-width: 220px;
+}
+
+.regra-select {
+  width: auto;
+  min-width: 160px;
+  font-size: 0.82rem;
+}
+
+/* ---- Lista de regras (cards visuais) ---- */
+.regra-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.regra-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--primary);
+  border-radius: var(--radius-md);
+  transition: box-shadow var(--transition), border-color var(--transition);
+  cursor: pointer;
+}
+
+.regra-item:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--primary);
+}
+
+.regra-item.inativa {
+  border-left-color: var(--border);
+  opacity: 0.6;
+}
+
+.regra-item.critica {
+  border-left-color: var(--danger);
+}
+
+.regra-item.alta {
+  border-left-color: var(--warning);
+}
+
+.regra-item-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  background: rgba(0, 145, 173, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.regra-item-icon.danger  { background: rgba(239,68,68,0.1);  color: var(--danger);  }
+.regra-item-icon.warning { background: rgba(255,210,63,0.1); color: var(--warning); }
+.regra-item-icon.success { background: rgba(34,197,94,0.1);  color: var(--success); }
+
+.regra-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.regra-item-nome {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.regra-item-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 4px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.regra-item-meta span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.regra-item-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+/* ---- Grupos grid ---- */
+.regra-grupos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.regra-grupo-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: box-shadow var(--transition), border-color var(--transition);
+  cursor: pointer;
+}
+
+.regra-grupo-card:hover {
+  border-color: var(--primary);
+  box-shadow: var(--shadow-md);
+}
+
+.regra-grupo-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.regra-grupo-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  background: rgba(0, 145, 173, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.regra-grupo-nome {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.regra-grupo-desc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.regra-grupo-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* ---- Horários ---- */
+.regra-horarios-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.regra-horario-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  transition: border-color var(--transition);
+}
+
+.regra-horario-item:hover {
+  border-color: var(--primary);
+}
+
+.regra-horario-faixa {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--primary);
+  min-width: 140px;
+}
+
+.regra-horario-nome {
+  flex: 1;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.regra-horario-dias {
+  display: flex;
+  gap: 4px;
+}
+
+.regra-dia-badge {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.regra-dia-badge.ativo {
+  background: rgba(0, 145, 173, 0.12);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+/* ---- Áreas ---- */
+.regra-areas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 14px;
+}
+
+.regra-area-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+  cursor: pointer;
+  transition: box-shadow var(--transition), border-color var(--transition);
+}
+
+.regra-area-card:hover {
+  border-color: var(--primary);
+  box-shadow: var(--shadow-md);
+}
+
+.regra-area-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  background: rgba(0, 145, 173, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  color: var(--primary);
+}
+
+.regra-area-icon.restrita {
+  background: rgba(239,68,68,0.1);
+  color: var(--danger);
+}
+
+.regra-area-nome {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.regra-area-meta {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+/* ---- Modal: Dias da semana ---- */
+.regra-dias-wrap {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.regra-dia {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition), color var(--transition);
+  user-select: none;
+}
+
+.regra-dia:has(input:checked) {
+  background: rgba(0, 145, 173, 0.1);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.regra-dia input {
+  display: none;
+}
+
+/* ---- Modal: preview de horário ---- */
+.regra-horario-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px;
+  background: var(--surface-2);
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--border);
+  margin-top: 8px;
+}
+
+.regra-horario-preview-bloco {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.regra-horario-preview-sep {
+  font-size: 1.4rem;
+  color: var(--text-muted);
+}
+
+/* ---- Responsivo ---- */
+@media (max-width: 768px) {
+  .regra-filtros {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .regra-item {
+    flex-wrap: wrap;
+  }
+
+  .regra-item-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}

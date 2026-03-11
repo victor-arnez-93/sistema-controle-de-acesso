@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Funcionários — CRV Controle de Acesso</title>
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <link rel="stylesheet" href="static/css/main.css">
+  <link rel="stylesheet" href="static/css/funcionarios.css">
+</head>
+<body>
+
+<div class="app-wrapper" id="app-wrapper">
+  <div id="sidebar-container"></div>
+  <div id="header-container"></div>
+
+  <main class="main-content">
+
+    <!-- Cabeçalho -->
+    <div class="page-header">
+      <div>
+        <h2 class="page-title">Funcionários</h2>
+        <p class="text-sm text-muted mt-1">Cadastro e gestão de colaboradores</p>
+      </div>
+      <div class="flex gap-2">
+        <button class="btn btn-ghost btn-sm">
+          <i class="ph ph-upload-simple"></i> Importar
+        </button>
+        <button class="btn btn-ghost btn-sm">
+          <i class="ph ph-download-simple"></i> Exportar
+        </button>
+        <button class="btn btn-primary btn-sm" id="btn-novo">
+          <i class="ph ph-plus"></i> Novo Funcionário
+        </button>
+      </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:20px;">
+
+      <div class="kpi-card">
+        <div class="flex items-center justify-between">
+          <span class="kpi-label">Total</span>
+          <i class="ph ph-users kpi-icon" style="color:var(--primary);"></i>
+        </div>
+        <div class="kpi-value">—</div>
+        <div class="kpi-sub">funcionários cadastrados</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="flex items-center justify-between">
+          <span class="kpi-label">Ativos</span>
+          <i class="ph ph-check-circle kpi-icon" style="color:var(--success);"></i>
+        </div>
+        <div class="kpi-value">—</div>
+        <div class="kpi-sub">com acesso liberado</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="flex items-center justify-between">
+          <span class="kpi-label">Inativos</span>
+          <i class="ph ph-x-circle kpi-icon" style="color:var(--danger);"></i>
+        </div>
+        <div class="kpi-value">—</div>
+        <div class="kpi-sub">acesso bloqueado</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="flex items-center justify-between">
+          <span class="kpi-label">Sem biometria</span>
+          <i class="ph ph-fingerprint kpi-icon" style="color:var(--warning);"></i>
+        </div>
+        <div class="kpi-value">—</div>
+        <div class="kpi-sub">pendentes de cadastro</div>
+      </div>
+
+    </div>
+
+    <!-- Filtros e busca -->
+    <div class="card mb-4">
+      <div class="func-filtros">
+        <div class="input-icon-wrap func-busca">
+          <i class="ph ph-magnifying-glass input-icon"></i>
+          <input type="text" class="form-control" id="input-busca" placeholder="Buscar por nome, matrícula ou setor...">
+        </div>
+        <select class="form-control func-select" id="filtro-setor">
+          <option value="">Todos os setores</option>
+          <option>Operações</option>
+          <option>Administrativo</option>
+          <option>TI</option>
+          <option>RH</option>
+          <option>Financeiro</option>
+          <option>Segurança</option>
+        </select>
+        <select class="form-control func-select" id="filtro-status">
+          <option value="">Todos os status</option>
+          <option value="ativo">Ativo</option>
+          <option value="inativo">Inativo</option>
+          <option value="pendente">Pendente</option>
+        </select>
+        <select class="form-control func-select" id="filtro-turno">
+          <option value="">Todos os turnos</option>
+          <option>Manhã</option>
+          <option>Tarde</option>
+          <option>Noite</option>
+          <option>Integral</option>
+        </select>
+        <div class="func-view-toggle">
+          <button class="btn btn-ghost btn-sm btn-icon func-view-btn active" id="btn-view-tabela" title="Tabela">
+            <i class="ph ph-list"></i>
+          </button>
+          <button class="btn btn-ghost btn-sm btn-icon func-view-btn" id="btn-view-cards" title="Cards">
+            <i class="ph ph-squares-four"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabela / Estado vazio -->
+    <div class="card" id="view-tabela">
+      <div class="card-header">
+        <span class="card-title"><i class="ph ph-table"></i> Lista de Funcionários</span>
+        <span class="text-sm text-muted" id="total-label">0 registros</span>
+      </div>
+
+      <!-- Estado vazio -->
+      <div class="func-empty" id="func-empty">
+        <i class="ph ph-users"></i>
+        <h3>Nenhum funcionário cadastrado</h3>
+        <p>Clique em <strong>Novo Funcionário</strong> para começar ou importe uma planilha.</p>
+        <div class="flex gap-2 justify-center mt-4">
+          <button class="btn btn-primary" id="btn-novo-empty">
+            <i class="ph ph-plus"></i> Novo Funcionário
+          </button>
+          <button class="btn btn-ghost">
+            <i class="ph ph-upload-simple"></i> Importar planilha
+          </button>
+        </div>
+      </div>
+
+      <!-- Tabela (oculta até ter dados) -->
+      <div class="table-wrapper func-table-hidden" id="func-table-wrap">
+        <table id="func-table">
+          <thead>
+            <tr>
+              <th style="width:40px;"><input type="checkbox" id="check-all"></th>
+              <th>Funcionário</th>
+              <th>Matrícula</th>
+              <th>Setor</th>
+              <th>Turno</th>
+              <th>Biometria</th>
+              <th>Status</th>
+              <th style="width:120px;">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="func-tbody">
+            <!-- Linhas injetadas via JS/backend -->
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+
+    <!-- View Cards (oculta por padrão) -->
+    <div class="func-cards-grid func-table-hidden" id="view-cards">
+      <!-- Cards injetados via JS -->
+    </div>
+
+  </main>
+</div>
+
+<!-- Modal: Novo / Editar Funcionário -->
+<div class="modal-overlay func-table-hidden" id="modal-funcionario">
+  <div class="modal func-modal">
+
+    <div class="modal-header">
+      <h3 class="modal-title" id="modal-titulo">
+        <i class="ph ph-user-plus"></i> Novo Funcionário
+      </h3>
+      <button class="modal-close" id="modal-fechar">
+        <i class="ph ph-x"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+
+      <!-- Avatar / Foto -->
+      <div class="func-modal-avatar-wrap">
+        <div class="func-modal-avatar" id="modal-avatar-preview">
+          <i class="ph ph-user"></i>
+        </div>
+        <div class="flex flex-col gap-1">
+          <button class="btn btn-ghost btn-sm">
+            <i class="ph ph-camera"></i> Foto
+          </button>
+          <span class="text-xs text-muted">JPG ou PNG · máx 2MB</span>
+        </div>
+      </div>
+
+      <!-- Dados pessoais -->
+      <div class="modal-section-title">Dados Pessoais</div>
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label class="form-label">Nome completo <span class="form-required">*</span></label>
+          <input type="text" class="form-control" id="f-nome" placeholder="Nome do funcionário">
+        </div>
+        <div class="form-group">
+          <label class="form-label">CPF <span class="form-required">*</span></label>
+          <input type="text" class="form-control" id="f-cpf" placeholder="000.000.000-00">
+        </div>
+        <div class="form-group">
+          <label class="form-label">E-mail</label>
+          <input type="email" class="form-control" id="f-email" placeholder="email@empresa.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Telefone</label>
+          <input type="text" class="form-control" id="f-telefone" placeholder="(00) 00000-0000">
+        </div>
+      </div>
+
+      <!-- Dados corporativos -->
+      <div class="modal-section-title">Dados Corporativos</div>
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label class="form-label">Matrícula <span class="form-required">*</span></label>
+          <input type="text" class="form-control" id="f-matricula" placeholder="Gerada automaticamente" readonly>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Cargo</label>
+          <input type="text" class="form-control" id="f-cargo" placeholder="Ex: Analista de TI">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Setor <span class="form-required">*</span></label>
+          <select class="form-control" id="f-setor">
+            <option value="">Selecione...</option>
+            <option>Operações</option>
+            <option>Administrativo</option>
+            <option>TI</option>
+            <option>RH</option>
+            <option>Financeiro</option>
+            <option>Segurança</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Turno <span class="form-required">*</span></label>
+          <select class="form-control" id="f-turno">
+            <option value="">Selecione...</option>
+            <option>Manhã</option>
+            <option>Tarde</option>
+            <option>Noite</option>
+            <option>Integral</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Data de admissão</label>
+          <input type="date" class="form-control" id="f-admissao">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select class="form-control" id="f-status">
+            <option value="ativo">Ativo</option>
+            <option value="inativo">Inativo</option>
+            <option value="pendente">Pendente</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Acesso -->
+      <div class="modal-section-title">Controle de Acesso</div>
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label class="form-label">Nível de acesso</label>
+          <select class="form-control" id="f-nivel">
+            <option value="">Selecione...</option>
+            <option>Básico</option>
+            <option>Intermediário</option>
+            <option>Avançado</option>
+            <option>Administrador</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Grupo de acesso</label>
+          <select class="form-control" id="f-grupo">
+            <option value="">Selecione...</option>
+            <option>Grupo padrão</option>
+            <option>Área restrita</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Biometria -->
+      <div class="func-bio-section">
+        <div class="modal-section-title">Biometria</div>
+        <div class="func-bio-grid">
+          <div class="func-bio-item pendente">
+            <i class="ph ph-fingerprint"></i>
+            <span>Digital</span>
+            <span class="badge badge-warning">Pendente</span>
+          </div>
+          <div class="func-bio-item pendente">
+            <i class="ph ph-scan"></i>
+            <span>Facial</span>
+            <span class="badge badge-warning">Pendente</span>
+          </div>
+          <div class="func-bio-item pendente">
+            <i class="ph ph-credit-card"></i>
+            <span>Cartão</span>
+            <span class="badge badge-warning">Pendente</span>
+          </div>
+        </div>
+        <p class="text-xs text-muted mt-2">
+          <i class="ph ph-info"></i> O cadastro biométrico é realizado diretamente no equipamento Control iD após salvar o funcionário.
+        </p>
+      </div>
+
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="btn-cancelar">Cancelar</button>
+      <button class="btn btn-primary" id="btn-salvar">
+        <i class="ph ph-floppy-disk"></i> Salvar Funcionário
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<script src="static/js/main.js"></script>
+<script src="static/js/funcionarios.js"></script>
+</body>
+</html>
