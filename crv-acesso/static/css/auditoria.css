@@ -16,52 +16,42 @@
 /* =====================================================
    FILTROS
    ===================================================== */
+.audit-filtros{
 
-.audit-filtros {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  padding: 4px 0;
+  display:flex;
+
+  flex-wrap:wrap;
+
+  gap:14px;
+
 }
 
-.audit-busca {
-  flex: 1;
-  min-width: 220px;
-  position: relative;
-  display: flex;
-  align-items: center;
+.audit-busca{
+
+  flex:1;
+  min-width:260px;
+
 }
 
-.audit-busca .form-control {
-  height: 40px;
-  padding-left: 36px;
+.audit-select{
+
+  width:200px;
+
 }
 
-.audit-select {
-  height: 40px;
-  min-width: 170px;
-  flex-shrink: 0;
+.audit-datas{
+
+  display:flex;
+  align-items:center;
+  gap:8px;
+
 }
 
-.audit-datas {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
+.audit-date{
 
-.audit-date {
-  height: 40px;
-  width: 148px;
-}
+  width:160px;
 
-.audit-datas-sep {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  flex-shrink: 0;
 }
-
 
 /* =====================================================
    LAYOUT PRINCIPAL
@@ -419,6 +409,52 @@
   margin: 0;
   max-height: 180px;
   overflow-y: auto;
+}
+
+/* ============================================================
+HEADER DA PÁGINA
+============================================================ */
+
+.page-header{
+
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+
+  gap:24px;
+
+  margin-bottom:28px;
+
+}
+
+.page-header .flex{
+
+  display:flex;
+  align-items:center;
+  gap:12px;
+
+}
+
+.page-title{
+  margin:0;
+}
+
+.page-header p{
+  margin-top:6px;
+}
+
+/* ============================================================
+KPIs
+============================================================ */
+
+.kpi-grid{
+
+  display:grid;
+
+  gap:20px;
+
+  margin-bottom:26px;
+
 }
 
 

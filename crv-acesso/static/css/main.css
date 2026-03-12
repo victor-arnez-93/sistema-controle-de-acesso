@@ -196,8 +196,8 @@ a:hover { color: var(--primary-hover); }
 }
 
 .header-logo-cliente {
-  height: 36px;
-  max-width: 140px;
+  height: 150px;
+  max-width: 180px;
   object-fit: contain;
 }
 
@@ -453,9 +453,9 @@ a:hover { color: var(--primary-hover); }
 }
 
 .sidebar-footer-logo {
-  height: 24px;
+  height: 60px;
   flex-shrink: 0;
-  opacity: 0.7;
+  opacity: 0.9;
   transition: opacity var(--transition);
 }
 
@@ -1045,6 +1045,167 @@ tbody tr:hover { background: var(--surface-2); }
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* ======================================
+MODAL USUÁRIO
+====================================== */
+
+.user-modal-overlay{
+
+position:fixed;
+inset:0;
+
+background:rgba(0,0,0,.45);
+backdrop-filter:blur(6px);
+
+display:flex;
+align-items:center;
+justify-content:center;
+
+z-index:9999;
+
+}
+
+.user-modal{
+
+width:420px;
+max-width:95%;
+
+background:var(--surface);
+border:1px solid var(--border);
+border-radius:var(--radius-lg);
+
+box-shadow:var(--shadow-lg);
+
+padding:28px;
+
+display:flex;
+flex-direction:column;
+gap:22px;
+
+position:relative;
+
+}
+
+.user-modal-close{
+
+position:absolute;
+top:12px;
+right:14px;
+
+border:none;
+background:none;
+
+font-size:20px;
+cursor:pointer;
+
+color:var(--text-secondary);
+
+}
+
+.user-modal-header{
+
+display:flex;
+align-items:center;
+gap:16px;
+
+}
+
+.user-modal-avatar{
+
+width:56px;
+height:56px;
+
+border-radius:50%;
+
+background:var(--primary);
+color:white;
+
+display:flex;
+align-items:center;
+justify-content:center;
+
+font-size:26px;
+
+}
+
+.user-modal-name{
+
+font-weight:600;
+font-size:1.05rem;
+
+}
+
+.user-modal-email{
+
+font-size:.85rem;
+color:var(--text-secondary);
+
+}
+
+.user-modal-body{
+
+display:flex;
+flex-direction:column;
+gap:12px;
+
+}
+
+.user-modal-row{
+
+display:flex;
+align-items:center;
+gap:10px;
+
+font-size:.9rem;
+
+border-bottom:1px solid var(--border);
+padding-bottom:8px;
+
+}
+
+.user-modal-actions{
+
+display:flex;
+flex-direction:column;
+gap:12px;
+
+}
+
+.btn-user{
+
+padding:12px 18px;
+
+border-radius:999px;
+
+border:1px solid var(--border);
+
+background:transparent;
+
+display:flex;
+align-items:center;
+gap:8px;
+
+cursor:pointer;
+
+font-weight:500;
+
+}
+
+.btn-logout{
+
+border-color:#ef4444;
+color:#ef4444;
+
+}
+
+.user-modal-footer{
+
+text-align:center;
+font-size:.8rem;
+color:var(--text-secondary);
+
+}
 
 /* ============================================================
    RESPONSIVO — SIDEBAR HAMBURGER

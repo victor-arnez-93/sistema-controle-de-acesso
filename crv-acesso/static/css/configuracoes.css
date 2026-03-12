@@ -20,14 +20,19 @@
 /* =====================================================
    LAYOUT PRINCIPAL
    ===================================================== */
+.cfg-layout{
 
-.cfg-layout {
-  display: grid;
-  grid-template-columns: 220px 1fr;
-  gap: 20px;
-  align-items: flex-start;
+  display:grid;
+
+  grid-template-columns:220px 1fr;
+
+  gap:22px;
+
+  align-items:flex-start;
+
+  margin-bottom:26px;
+
 }
-
 
 /* =====================================================
    NAV LATERAL
@@ -515,6 +520,51 @@
   font-size: 0.92rem;
 }
 
+/* ============================================================
+HEADER DA PÁGINA
+============================================================ */
+
+.page-header{
+
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+
+  gap:24px;
+
+  margin-bottom:28px;
+
+}
+
+.page-header .flex{
+
+  display:flex;
+  align-items:center;
+  gap:12px;
+
+}
+
+.page-title{
+  margin:0;
+}
+
+.page-header p{
+  margin-top:6px;
+}
+
+/* ============================================================
+KPIs
+============================================================ */
+
+.kpi-grid{
+
+  display:grid;
+
+  gap:20px;
+
+  margin-bottom:26px;
+
+}
 
 /* =====================================================
    RESPONSIVO

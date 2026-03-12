@@ -239,3 +239,194 @@ function initNavegacao() {
     if (rota) window.location.href = rota;
   });
 }
+
+/* ------------------------------------------------------------
+   MODAL DE USUÁRIO (avatar header)
+------------------------------------------------------------ */
+
+document.addEventListener('click', (e) => {
+
+  const avatar = e.target.closest('#user-avatar');
+
+  if (!avatar) return;
+
+  abrirModalUsuario();
+
+});
+
+function abrirModalUsuario(){
+
+  if(document.getElementById('user-modal')) return;
+
+  const modal = document.createElement('div');
+
+  modal.id = 'user-modal';
+  modal.className = 'user-modal-overlay';
+
+  modal.innerHTML = `
+
+<div class="user-modal">
+
+    <button class="user-modal-close">
+        <i class="ph ph-x"></i>
+    </button>
+
+    <div class="user-modal-header">
+
+        <div class="user-modal-avatar">
+            <i class="ph ph-user"></i>
+        </div>
+
+        <div class="user-modal-info">
+            <div class="user-modal-name">Admin</div>
+            <div class="user-modal-email">admin@sistema.com</div>
+        </div>
+
+    </div>
+
+    <div class="user-modal-body">
+
+        <div class="user-modal-row">
+            <i class="ph ph-calendar"></i>
+            <span>Último acesso:</span>
+            <b>12/03/2026 17:26</b>
+        </div>
+
+        <div class="user-modal-row">
+            <i class="ph ph-user-gear"></i>
+            <span>Perfil:</span>
+            <b>Administrador</b>
+        </div>
+
+        <div class="user-modal-row">
+            <i class="ph ph-clock"></i>
+            <span>Sessão ativa há:</span>
+            <b>30 min</b>
+        </div>
+
+    </div>
+
+    <div class="user-modal-actions">
+
+        <button class="btn btn-primary w-full">
+            <i class="ph ph-gear"></i>
+            Configurações
+        </button>
+
+        <button class="btn btn-primary w-full">
+            <i class="ph ph-key"></i>
+            Alterar senha
+        </button>
+
+        <button class="btn btn-danger w-full" id="btn-logout">
+            <i class="ph ph-sign-out"></i>
+            Sair do sistema
+        </button>
+
+    </div>
+
+    <div class="user-modal-footer">
+        <i class="ph ph-shield-check"></i>
+        Sistema seguro
+    </div>
+
+</div>
+`;
+
+  document.body.appendChild(modal);
+
+}
+
+/* ------------------------------------------------------------
+   FECHAR MODAL USUÁRIO
+------------------------------------------------------------ */
+
+document.addEventListener('click', (e)=>{
+
+  if(e.target.closest('.user-modal-close')){
+      document.getElementById('user-modal')?.remove();
+  }
+
+  if(e.target.classList.contains('user-modal-overlay')){
+      document.getElementById('user-modal')?.remove();
+  }
+
+});
+
+/* ------------------------------------------------------------
+   LOGOUT COM CONFIRMAÇÃO
+------------------------------------------------------------ */
+
+document.addEventListener('click', (e)=>{
+
+  const logoutBtn = e.target.closest('#btn-logout');
+
+  if(!logoutBtn) return;
+
+  abrirModalConfirmacaoLogout();
+
+});
+
+function abrirModalConfirmacaoLogout(){
+
+  const existente = document.getElementById('logout-confirm-modal');
+  if(existente) existente.remove();
+
+  const modal = document.createElement('div');
+
+  modal.id = 'logout-confirm-modal';
+  modal.className = 'user-modal-overlay';
+
+  modal.innerHTML = `
+
+<div class="user-modal">
+
+    <div class="user-modal-header">
+
+        <div class="user-modal-avatar">
+            <i class="ph ph-sign-out"></i>
+        </div>
+
+        <div class="user-modal-info">
+            <div class="user-modal-name">Confirmar saída</div>
+            <div class="user-modal-email">
+                Deseja realmente sair do sistema?
+            </div>
+        </div>
+
+    </div>
+
+    <div class="user-modal-actions">
+
+        <button class="btn btn-primary w-full" id="cancelar-logout">
+            Cancelar
+        </button>
+
+        <button class="btn btn-danger w-full" id="confirmar-logout">
+            Sair do sistema
+        </button>
+
+    </div>
+
+</div>
+`;
+
+  document.body.appendChild(modal);
+
+}
+
+/* ------------------------------------------------------------
+   AÇÕES DO MODAL DE LOGOUT
+------------------------------------------------------------ */
+
+document.addEventListener('click',(e)=>{
+
+  if(e.target.closest('#cancelar-logout')){
+      document.getElementById('logout-confirm-modal')?.remove();
+  }
+
+  if(e.target.closest('#confirmar-logout')){
+      window.location.href = "login.html";
+  }
+
+});
