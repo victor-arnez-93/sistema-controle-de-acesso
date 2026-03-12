@@ -1,38 +1,119 @@
-/* ============================================================
-   REGRAS DE ACESSO — regras_acesso.css
-   ============================================================ */
+/* =====================================================
+   CRV CONTROLE DE ACESSO
+   TELA: REGRAS DE ACESSO
+   ===================================================== */
 
-/* ---- Painel de abas ---- */
-.regra-tab-hidden {
+
+/* =====================================================
+   UTILITÁRIOS LOCAIS
+   ===================================================== */
+
+.regra-hidden {
   display: none;
 }
 
-/* ---- KPI cards com borda colorida ---- */
-.regra-kpi-ativa  { border-top: 3px solid var(--success); }
-.regra-kpi-grupos { border-top: 3px solid var(--primary); }
-.regra-kpi-areas  { border-top: 3px solid var(--danger);  }
-.regra-kpi-exc    { border-top: 3px solid var(--warning); }
+.form-required {
+  color: var(--danger);
+}
 
-/* ---- Filtros ---- */
-.regra-filtros {
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+
+/* =====================================================
+   ABAS
+   ===================================================== */
+
+.regra-tabs {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 20px;
+}
+
+.regra-tab {
   display: flex;
   align-items: center;
+  gap: 7px;
+  padding: 10px 20px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: .03em;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  transition:
+    color var(--transition),
+    background var(--transition),
+    border-color var(--transition);
+  white-space: nowrap;
+}
+
+.regra-tab i {
+  font-size: 1rem;
+}
+
+.regra-tab:hover {
+  color: var(--text-primary);
+  background: var(--surface-2);
+}
+
+.regra-tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+  background: rgba(0, 145, 173, 0.06);
+}
+
+
+/* =====================================================
+   ESTADO VAZIO
+   ===================================================== */
+
+.regra-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 60px 24px;
   gap: 10px;
-  flex-wrap: wrap;
 }
 
-.regra-busca {
-  flex: 1;
-  min-width: 220px;
+.regra-empty i {
+  font-size: 46px;
+  opacity: .18;
+  margin-bottom: 6px;
+  color: var(--text-primary);
 }
 
-.regra-select {
-  width: auto;
-  min-width: 160px;
-  font-size: 0.82rem;
+.regra-empty h3 {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-secondary);
 }
 
-/* ---- Lista de regras (cards visuais) ---- */
+.regra-empty p {
+  font-size: 0.83rem;
+  color: var(--text-muted);
+  max-width: 380px;
+  line-height: 1.7;
+}
+
+
+/* =====================================================
+   LISTA DE REGRAS — ITEM
+   ===================================================== */
+
 .regra-list {
   display: flex;
   flex-direction: column;
@@ -43,58 +124,67 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 14px 16px;
+  padding: 14px 18px;
   background: var(--surface-2);
   border: 1px solid var(--border);
   border-left: 4px solid var(--primary);
   border-radius: var(--radius-md);
-  transition: box-shadow var(--transition), border-color var(--transition);
   cursor: pointer;
+  transition:
+    box-shadow var(--transition),
+    border-color var(--transition),
+    transform .15s ease;
 }
 
 .regra-item:hover {
   box-shadow: var(--shadow-md);
-  border-color: var(--primary);
+  transform: translateX(2px);
 }
 
+.regra-item.alta    { border-left-color: var(--warning); }
+.regra-item.critica { border-left-color: var(--danger);  }
 .regra-item.inativa {
   border-left-color: var(--border);
-  opacity: 0.6;
-}
-
-.regra-item.critica {
-  border-left-color: var(--danger);
-}
-
-.regra-item.alta {
-  border-left-color: var(--warning);
+  opacity: .55;
 }
 
 .regra-item-icon {
   width: 40px;
   height: 40px;
   border-radius: var(--radius-sm);
-  background: rgba(0, 145, 173, 0.1);
+  background: rgba(0, 145, 173, .10);
+  color: var(--primary);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.2rem;
-  color: var(--primary);
   flex-shrink: 0;
 }
 
-.regra-item-icon.danger  { background: rgba(239,68,68,0.1);  color: var(--danger);  }
-.regra-item-icon.warning { background: rgba(255,210,63,0.1); color: var(--warning); }
-.regra-item-icon.success { background: rgba(34,197,94,0.1);  color: var(--success); }
+.regra-item-icon.warning {
+  background: rgba(255, 210, 63, .12);
+  color: var(--warning);
+}
 
-.regra-item-info {
+.regra-item-icon.danger {
+  background: rgba(239, 68, 68, .10);
+  color: var(--danger);
+}
+
+.regra-item-icon.success {
+  background: rgba(34, 197, 94, .10);
+  color: var(--success);
+}
+
+.regra-item-body {
   flex: 1;
   min-width: 0;
 }
 
 .regra-item-nome {
-  font-size: 0.88rem;
-  font-weight: 600;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
   color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
@@ -104,7 +194,8 @@
 .regra-item-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  align-items: center;
+  gap: 12px;
   margin-top: 4px;
   font-size: 0.75rem;
   color: var(--text-muted);
@@ -116,17 +207,27 @@
   gap: 4px;
 }
 
+.regra-item-meta i {
+  font-size: 0.85rem;
+  opacity: .7;
+}
+
 .regra-item-actions {
   display: flex;
   gap: 4px;
   flex-shrink: 0;
 }
 
-/* ---- Grupos grid ---- */
+
+/* =====================================================
+   GRUPOS — GRID DE CARDS
+   ===================================================== */
+
 .regra-grupos-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
   gap: 14px;
+  padding-top: 4px;
 }
 
 .regra-grupo-card {
@@ -136,14 +237,34 @@
   padding: 18px 16px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  transition: box-shadow var(--transition), border-color var(--transition);
+  gap: 12px;
   cursor: pointer;
+  transition:
+    border-color var(--transition),
+    box-shadow var(--transition),
+    transform .15s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.regra-grupo-card::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--primary);
+  opacity: 0;
+  transition: opacity var(--transition);
 }
 
 .regra-grupo-card:hover {
   border-color: var(--primary);
   box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.regra-grupo-card:hover::before {
+  opacity: 1;
 }
 
 .regra-grupo-header {
@@ -153,60 +274,76 @@
 }
 
 .regra-grupo-icon {
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   border-radius: var(--radius-sm);
-  background: rgba(0, 145, 173, 0.1);
+  background: rgba(0, 145, 173, .10);
+  color: var(--primary);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.1rem;
-  color: var(--primary);
   flex-shrink: 0;
 }
 
 .regra-grupo-nome {
-  font-size: 0.88rem;
-  font-weight: 600;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
   color: var(--text-primary);
 }
 
 .regra-grupo-desc {
-  font-size: 0.75rem;
+  font-size: 0.78rem;
   color: var(--text-muted);
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 .regra-grupo-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: 8px;
+  padding-top: 10px;
   border-top: 1px solid var(--border);
   font-size: 0.75rem;
   color: var(--text-muted);
 }
 
-/* ---- Horários ---- */
-.regra-horarios-grid {
+.regra-grupo-footer span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+
+/* =====================================================
+   HORÁRIOS — LISTA
+   ===================================================== */
+
+.regra-horarios-list {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  padding-top: 4px;
 }
 
 .regra-horario-item {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 12px 16px;
+  gap: 16px;
+  padding: 14px 18px;
   background: var(--surface-2);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  transition: border-color var(--transition);
+  cursor: pointer;
+  transition:
+    border-color var(--transition),
+    box-shadow var(--transition);
 }
 
 .regra-horario-item:hover {
   border-color: var(--primary);
+  box-shadow: var(--shadow-sm);
 }
 
 .regra-horario-faixa {
@@ -214,15 +351,21 @@
   align-items: center;
   gap: 6px;
   font-family: 'Rajdhani', sans-serif;
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: 700;
   color: var(--primary);
-  min-width: 140px;
+  min-width: 150px;
+  flex-shrink: 0;
+}
+
+.regra-horario-faixa i {
+  font-size: 1rem;
+  opacity: .7;
 }
 
 .regra-horario-nome {
   flex: 1;
-  font-size: 0.85rem;
+  font-size: 0.88rem;
   font-weight: 500;
   color: var(--text-primary);
 }
@@ -230,11 +373,12 @@
 .regra-horario-dias {
   display: flex;
   gap: 4px;
+  flex-shrink: 0;
 }
 
 .regra-dia-badge {
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -244,131 +388,228 @@
   font-size: 0.65rem;
   font-weight: 700;
   color: var(--text-muted);
+  transition:
+    background var(--transition),
+    border-color var(--transition),
+    color var(--transition);
 }
 
 .regra-dia-badge.ativo {
-  background: rgba(0, 145, 173, 0.12);
+  background: rgba(0, 145, 173, .12);
   border-color: var(--primary);
   color: var(--primary);
 }
 
-/* ---- Áreas ---- */
+.regra-horario-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+
+/* =====================================================
+   ÁREAS — GRID DE CARDS
+   ===================================================== */
+
 .regra-areas-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 14px;
+  padding-top: 4px;
 }
 
 .regra-area-card {
   background: var(--surface-2);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  padding: 18px 16px;
+  padding: 22px 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 10px;
   text-align: center;
   cursor: pointer;
-  transition: box-shadow var(--transition), border-color var(--transition);
+  transition:
+    border-color var(--transition),
+    box-shadow var(--transition),
+    transform .15s ease;
 }
 
 .regra-area-card:hover {
   border-color: var(--primary);
   box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
 }
 
 .regra-area-icon {
-  width: 48px;
-  height: 48px;
+  width: 50px;
+  height: 50px;
   border-radius: var(--radius-md);
-  background: rgba(0, 145, 173, 0.1);
+  background: rgba(0, 145, 173, .10);
+  color: var(--primary);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.4rem;
-  color: var(--primary);
+  font-size: 1.5rem;
+  transition: background var(--transition), color var(--transition);
+}
+
+.regra-area-card:hover .regra-area-icon {
+  background: rgba(0, 145, 173, .18);
 }
 
 .regra-area-icon.restrita {
-  background: rgba(239,68,68,0.1);
+  background: rgba(239, 68, 68, .10);
   color: var(--danger);
 }
 
+.regra-area-card:hover .regra-area-icon.restrita {
+  background: rgba(239, 68, 68, .18);
+}
+
 .regra-area-nome {
-  font-size: 0.85rem;
-  font-weight: 600;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.92rem;
+  font-weight: 700;
   color: var(--text-primary);
 }
 
 .regra-area-meta {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
+  line-height: 1.5;
 }
 
-/* ---- Modal: Dias da semana ---- */
+.regra-area-footer {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-top: 4px;
+}
+
+
+/* =====================================================
+   MODAL
+   ===================================================== */
+
+.regra-modal {
+  max-width: 620px;
+  width: 100%;
+}
+
+
+/* Dias da semana */
+
 .regra-dias-wrap {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+  margin-top: 10px;
 }
 
 .regra-dia {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
+  justify-content: center;
+  gap: 0;
+  width: 52px;
+  height: 40px;
   background: var(--surface-2);
-  border: 1px solid var(--border);
+  border: 1.5px solid var(--border);
   border-radius: var(--radius-sm);
   font-size: 0.8rem;
-  font-weight: 500;
-  color: var(--text-secondary);
+  font-weight: 600;
+  color: var(--text-muted);
   cursor: pointer;
-  transition: background var(--transition), border-color var(--transition), color var(--transition);
   user-select: none;
-}
-
-.regra-dia:has(input:checked) {
-  background: rgba(0, 145, 173, 0.1);
-  border-color: var(--primary);
-  color: var(--primary);
+  transition:
+    background var(--transition),
+    border-color var(--transition),
+    color var(--transition);
 }
 
 .regra-dia input {
   display: none;
 }
 
-/* ---- Modal: preview de horário ---- */
+.regra-dia:has(input:checked) {
+  background: rgba(0, 145, 173, .12);
+  border-color: var(--primary);
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.regra-dia:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+
+/* Preview horário no modal */
+
 .regra-horario-preview {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 10px;
   padding: 16px;
   background: var(--surface-2);
-  border-radius: var(--radius-md);
   border: 1px dashed var(--border);
-  margin-top: 8px;
+  border-radius: var(--radius-md);
+  margin-top: 12px;
 }
 
 .regra-horario-preview-bloco {
   font-family: 'Rajdhani', sans-serif;
-  font-size: 1.8rem;
+  font-size: 2rem;
   font-weight: 700;
   color: var(--primary);
+  letter-spacing: .04em;
 }
 
 .regra-horario-preview-sep {
-  font-size: 1.4rem;
+  font-size: 1.6rem;
   color: var(--text-muted);
+  font-weight: 300;
 }
 
-/* ---- Responsivo ---- */
-@media (max-width: 768px) {
-  .regra-filtros {
-    flex-direction: column;
-    align-items: stretch;
+
+/* =====================================================
+   RESPONSIVO
+   ===================================================== */
+
+@media (max-width: 900px) {
+
+  .form-grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .regra-horario-item {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .regra-horario-faixa {
+    min-width: auto;
+  }
+
+  .regra-horario-dias {
+    order: 3;
+    width: 100%;
+  }
+
+}
+
+@media (max-width: 600px) {
+
+  .regra-tabs {
+    overflow-x: auto;
+    padding-bottom: 0;
+  }
+
+  .regra-tab {
+    padding: 8px 14px;
+    font-size: 0.82rem;
   }
 
   .regra-item {
@@ -379,4 +620,15 @@
     width: 100%;
     justify-content: flex-end;
   }
+
+  .regra-dias-wrap {
+    gap: 6px;
+  }
+
+  .regra-dia {
+    width: 44px;
+    height: 36px;
+    font-size: 0.75rem;
+  }
+
 }

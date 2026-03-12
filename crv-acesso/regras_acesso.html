@@ -16,13 +16,12 @@
 
   <main class="main-content">
 
-    <!-- Cabeçalho -->
     <div class="page-header">
       <div>
         <h2 class="page-title">Regras de Acesso</h2>
         <p class="text-sm text-muted mt-1">Horários, grupos e permissões por área</p>
       </div>
-      <div class="flex gap-2">
+      <div class="page-actions">
         <button class="btn btn-ghost btn-sm">
           <i class="ph ph-download-simple"></i> Exportar
         </button>
@@ -33,7 +32,7 @@
     </div>
 
     <!-- KPIs -->
-    <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:20px;">
+    <div class="kpi-grid">
 
       <div class="kpi-card">
         <div class="flex items-center justify-between">
@@ -64,39 +63,39 @@
 
       <div class="kpi-card">
         <div class="flex items-center justify-between">
-          <span class="kpi-label">Exceções</span>
-          <i class="ph ph-warning kpi-icon" style="color:var(--warning);"></i>
+          <span class="kpi-label">Faixas de horário</span>
+          <i class="ph ph-clock kpi-icon" style="color:var(--warning);"></i>
         </div>
         <div class="kpi-value">—</div>
-        <div class="kpi-sub">regras com exceção</div>
+        <div class="kpi-sub">períodos cadastrados</div>
       </div>
 
     </div>
 
     <!-- Abas -->
-    <div class="cred-tabs">
-      <button class="cred-tab active" data-tab="regras">
+    <div class="regra-tabs">
+      <button class="regra-tab active" data-tab="regras">
         <i class="ph ph-shield"></i> Regras
       </button>
-      <button class="cred-tab" data-tab="grupos">
+      <button class="regra-tab" data-tab="grupos">
         <i class="ph ph-users-three"></i> Grupos
       </button>
-      <button class="cred-tab" data-tab="horarios">
+      <button class="regra-tab" data-tab="horarios">
         <i class="ph ph-clock"></i> Horários
       </button>
-      <button class="cred-tab" data-tab="areas">
+      <button class="regra-tab" data-tab="areas">
         <i class="ph ph-map-pin"></i> Áreas
       </button>
     </div>
 
-    <!-- Painel: Regras -->
+    <!-- ===================== PAINEL: REGRAS ===================== -->
     <div id="tab-regras">
 
       <div class="card mb-4">
         <div class="func-filtros">
           <div class="input-icon-wrap func-busca">
             <i class="ph ph-magnifying-glass input-icon"></i>
-            <input type="text" class="form-control" placeholder="Buscar regra, grupo ou área...">
+            <input type="text" class="form-control" id="busca-regras" placeholder="Buscar regra, grupo ou área...">
           </div>
           <select class="form-control func-select">
             <option value="">Todos os tipos</option>
@@ -119,20 +118,16 @@
           <span class="text-sm text-muted">0 regras</span>
         </div>
 
-        <!-- Estado vazio -->
-        <div class="func-empty">
-          <i class="ph ph-shield"></i>
+        <div class="regra-empty" id="regras-empty">
+          <i class="ph ph-shield-slash"></i>
           <h3>Nenhuma regra configurada</h3>
           <p>Crie regras de acesso para controlar quem pode entrar em cada área e em quais horários.</p>
-          <div class="flex gap-2 justify-center mt-4">
-            <button class="btn btn-primary" id="btn-nova-regra-empty">
-              <i class="ph ph-plus"></i> Nova Regra
-            </button>
-          </div>
+          <button class="btn btn-primary mt-4" id="btn-nova-regra-empty">
+            <i class="ph ph-plus"></i> Nova Regra
+          </button>
         </div>
 
-        <!-- Tabela (oculta até ter dados) -->
-        <div class="table-wrapper func-table-hidden">
+        <div class="table-wrapper regra-hidden" id="regras-table-wrap">
           <table>
             <thead>
               <tr>
@@ -146,8 +141,8 @@
                 <th style="width:100px;">Ações</th>
               </tr>
             </thead>
-            <tbody>
-              <!-- Linhas injetadas via backend -->
+            <tbody id="regras-tbody">
+              <!-- injetado via backend -->
             </tbody>
           </table>
         </div>
@@ -155,78 +150,99 @@
 
     </div>
 
-    <!-- Painel: Grupos (oculto) -->
-    <div id="tab-grupos" class="regra-tab-hidden">
+    <!-- ===================== PAINEL: GRUPOS ===================== -->
+    <div id="tab-grupos" class="regra-tab-panel regra-hidden">
+
       <div class="card">
         <div class="card-header">
           <span class="card-title"><i class="ph ph-users-three"></i> Grupos de Acesso</span>
-          <button class="btn btn-primary btn-sm">
+          <button class="btn btn-primary btn-sm" id="btn-novo-grupo">
             <i class="ph ph-plus"></i> Novo Grupo
           </button>
         </div>
-        <div class="func-empty">
+
+        <div class="regra-empty">
           <i class="ph ph-users-three"></i>
           <h3>Nenhum grupo criado</h3>
-          <p>Grupos permitem aplicar regras a múltiplos funcionários de uma vez.</p>
+          <p>Grupos permitem aplicar regras a múltiplos funcionários de uma vez, simplificando a gestão de permissões.</p>
           <button class="btn btn-primary mt-4">
             <i class="ph ph-plus"></i> Criar Grupo
           </button>
         </div>
+
+        <div class="regra-grupos-grid regra-hidden" id="grupos-grid">
+          <!-- cards injetados via backend -->
+        </div>
+
       </div>
     </div>
 
-    <!-- Painel: Horários (oculto) -->
-    <div id="tab-horarios" class="regra-tab-hidden">
+    <!-- ===================== PAINEL: HORÁRIOS ===================== -->
+    <div id="tab-horarios" class="regra-tab-panel regra-hidden">
+
       <div class="card">
         <div class="card-header">
           <span class="card-title"><i class="ph ph-clock"></i> Faixas de Horário</span>
-          <button class="btn btn-primary btn-sm">
+          <button class="btn btn-primary btn-sm" id="btn-novo-horario">
             <i class="ph ph-plus"></i> Nova Faixa
           </button>
         </div>
-        <div class="func-empty">
+
+        <div class="regra-empty">
           <i class="ph ph-clock"></i>
           <h3>Nenhuma faixa configurada</h3>
-          <p>Configure períodos de acesso permitido como manhã, tarde, noite ou horário especial.</p>
+          <p>Configure períodos de acesso permitido como manhã, tarde, noite ou horário especial de acordo com cada turno.</p>
           <button class="btn btn-primary mt-4">
             <i class="ph ph-plus"></i> Criar Faixa
           </button>
         </div>
+
+        <div class="regra-horarios-list regra-hidden" id="horarios-list">
+          <!-- itens injetados via backend -->
+        </div>
+
       </div>
     </div>
 
-    <!-- Painel: Áreas (oculto) -->
-    <div id="tab-areas" class="regra-tab-hidden">
+    <!-- ===================== PAINEL: ÁREAS ===================== -->
+    <div id="tab-areas" class="regra-tab-panel regra-hidden">
+
       <div class="card">
         <div class="card-header">
           <span class="card-title"><i class="ph ph-map-pin"></i> Áreas Controladas</span>
-          <button class="btn btn-primary btn-sm">
+          <button class="btn btn-primary btn-sm" id="btn-nova-area">
             <i class="ph ph-plus"></i> Nova Área
           </button>
         </div>
-        <div class="func-empty">
-          <i class="ph ph-map-pin"></i>
+
+        <div class="regra-empty">
+          <i class="ph ph-map-trifold"></i>
           <h3>Nenhuma área cadastrada</h3>
           <p>Cadastre as zonas físicas monitoradas como portão principal, refeitório, sala de servidores, etc.</p>
           <button class="btn btn-primary mt-4">
             <i class="ph ph-plus"></i> Cadastrar Área
           </button>
         </div>
+
+        <div class="regra-areas-grid regra-hidden" id="areas-grid">
+          <!-- cards injetados via backend -->
+        </div>
+
       </div>
     </div>
 
   </main>
 </div>
 
-<!-- Modal: Nova Regra -->
-<div class="modal-overlay func-table-hidden" id="modal-regra">
-  <div class="modal">
+<!-- ===================== MODAL: NOVA REGRA ===================== -->
+<div class="modal-overlay regra-hidden" id="modal-regra">
+  <div class="modal regra-modal">
 
     <div class="modal-header">
-      <h3 class="modal-title">
+      <h3 class="modal-title" id="modal-regra-titulo">
         <i class="ph ph-shield-plus"></i> Nova Regra de Acesso
       </h3>
-      <button class="modal-close" id="modal-fechar">
+      <button class="modal-close" id="modal-regra-fechar">
         <i class="ph ph-x"></i>
       </button>
     </div>
@@ -235,13 +251,13 @@
 
       <div class="form-group">
         <label class="form-label">Nome da regra <span class="form-required">*</span></label>
-        <input type="text" class="form-control" placeholder="Ex: Acesso operacional — manhã">
+        <input type="text" class="form-control" id="r-nome" placeholder="Ex: Acesso operacional — manhã">
       </div>
 
       <div class="form-grid-2">
         <div class="form-group">
           <label class="form-label">Tipo <span class="form-required">*</span></label>
-          <select class="form-control">
+          <select class="form-control" id="r-tipo">
             <option value="">Selecione...</option>
             <option>Horário</option>
             <option>Área</option>
@@ -251,7 +267,7 @@
         </div>
         <div class="form-group">
           <label class="form-label">Prioridade</label>
-          <select class="form-control">
+          <select class="form-control" id="r-prioridade">
             <option>Normal</option>
             <option>Alta</option>
             <option>Crítica</option>
@@ -263,13 +279,13 @@
       <div class="form-grid-2">
         <div class="form-group">
           <label class="form-label">Grupo de acesso</label>
-          <select class="form-control">
+          <select class="form-control" id="r-grupo">
             <option value="">Selecione o grupo...</option>
           </select>
         </div>
         <div class="form-group">
           <label class="form-label">Área</label>
-          <select class="form-control">
+          <select class="form-control" id="r-area">
             <option value="">Selecione a área...</option>
           </select>
         </div>
@@ -279,43 +295,43 @@
       <div class="form-grid-2">
         <div class="form-group">
           <label class="form-label">Hora início</label>
-          <input type="time" class="form-control">
+          <input type="time" class="form-control" id="r-hora-inicio">
         </div>
         <div class="form-group">
           <label class="form-label">Hora fim</label>
-          <input type="time" class="form-control">
+          <input type="time" class="form-control" id="r-hora-fim">
         </div>
       </div>
 
       <div class="modal-section-title">Dias da semana</div>
       <div class="regra-dias-wrap">
-        <label class="regra-dia"><input type="checkbox" checked> Seg</label>
-        <label class="regra-dia"><input type="checkbox" checked> Ter</label>
-        <label class="regra-dia"><input type="checkbox" checked> Qua</label>
-        <label class="regra-dia"><input type="checkbox" checked> Qui</label>
-        <label class="regra-dia"><input type="checkbox" checked> Sex</label>
-        <label class="regra-dia"><input type="checkbox"> Sáb</label>
-        <label class="regra-dia"><input type="checkbox"> Dom</label>
+        <label class="regra-dia"><input type="checkbox" checked><span>Seg</span></label>
+        <label class="regra-dia"><input type="checkbox" checked><span>Ter</span></label>
+        <label class="regra-dia"><input type="checkbox" checked><span>Qua</span></label>
+        <label class="regra-dia"><input type="checkbox" checked><span>Qui</span></label>
+        <label class="regra-dia"><input type="checkbox" checked><span>Sex</span></label>
+        <label class="regra-dia"><input type="checkbox"><span>Sáb</span></label>
+        <label class="regra-dia"><input type="checkbox"><span>Dom</span></label>
       </div>
 
-      <div class="form-group mt-3">
+      <div class="form-group mt-4">
         <label class="form-label">Observação</label>
-        <textarea class="form-control" rows="2" placeholder="Descrição ou justificativa desta regra..."></textarea>
+        <textarea class="form-control" id="r-obs" rows="2" placeholder="Descrição ou justificativa desta regra..."></textarea>
       </div>
 
       <div class="form-group">
         <label class="form-label">Status</label>
-        <select class="form-control">
-          <option>Ativa</option>
-          <option>Inativa</option>
+        <select class="form-control" id="r-status">
+          <option value="ativa">Ativa</option>
+          <option value="inativa">Inativa</option>
         </select>
       </div>
 
     </div>
 
     <div class="modal-footer">
-      <button class="btn btn-ghost" id="btn-cancelar">Cancelar</button>
-      <button class="btn btn-primary" id="btn-salvar">
+      <button class="btn btn-ghost" id="btn-regra-cancelar">Cancelar</button>
+      <button class="btn btn-primary" id="btn-regra-salvar">
         <i class="ph ph-floppy-disk"></i> Salvar Regra
       </button>
     </div>
