@@ -37,43 +37,41 @@
 
     <!-- KPIs -->
     <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:20px;">
-
       <div class="kpi-card">
-        <div class="flex items-center justify-between">
-          <span class="kpi-label">Total</span>
-          <i class="ph ph-users kpi-icon" style="color:var(--primary);"></i>
-        </div>
-        <div class="kpi-value">—</div>
-        <div class="kpi-sub">funcionários cadastrados</div>
-      </div>
+  <div class="flex items-center justify-between">
+    <span class="kpi-label">Total</span>
+    <i class="ph ph-users kpi-icon" style="color:var(--primary);"></i>
+  </div>
+  <div class="kpi-value" id="kpi-total">0</div>
+  <div class="kpi-sub">funcionários cadastrados</div>
+</div>
 
-      <div class="kpi-card">
-        <div class="flex items-center justify-between">
-          <span class="kpi-label">Ativos</span>
-          <i class="ph ph-check-circle kpi-icon" style="color:var(--success);"></i>
-        </div>
-        <div class="kpi-value">—</div>
-        <div class="kpi-sub">com acesso liberado</div>
-      </div>
+<div class="kpi-card">
+  <div class="flex items-center justify-between">
+    <span class="kpi-label">Ativos</span>
+    <i class="ph ph-check-circle kpi-icon" style="color:var(--success);"></i>
+  </div>
+  <div class="kpi-value" id="kpi-ativos">0</div>
+  <div class="kpi-sub">com acesso liberado</div>
+</div>
 
-      <div class="kpi-card">
-        <div class="flex items-center justify-between">
-          <span class="kpi-label">Inativos</span>
-          <i class="ph ph-x-circle kpi-icon" style="color:var(--danger);"></i>
-        </div>
-        <div class="kpi-value">—</div>
-        <div class="kpi-sub">acesso bloqueado</div>
-      </div>
+<div class="kpi-card">
+  <div class="flex items-center justify-between">
+    <span class="kpi-label">Inativos</span>
+    <i class="ph ph-x-circle kpi-icon" style="color:var(--danger);"></i>
+  </div>
+  <div class="kpi-value" id="kpi-inativos">0</div>
+  <div class="kpi-sub">acesso bloqueado</div>
+</div>
 
-      <div class="kpi-card">
-        <div class="flex items-center justify-between">
-          <span class="kpi-label">Sem biometria</span>
-          <i class="ph ph-fingerprint kpi-icon" style="color:var(--warning);"></i>
-        </div>
-        <div class="kpi-value">—</div>
-        <div class="kpi-sub">pendentes de cadastro</div>
-      </div>
-
+<div class="kpi-card">
+  <div class="flex items-center justify-between">
+    <span class="kpi-label">Sem biometria</span>
+    <i class="ph ph-fingerprint kpi-icon" style="color:var(--warning);"></i>
+  </div>
+  <div class="kpi-value" id="kpi-biometria">0</div>
+  <div class="kpi-sub">pendentes de cadastro</div>
+</div>
     </div>
 
     <!-- Filtros e busca -->

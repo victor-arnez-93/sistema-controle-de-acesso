@@ -6,7 +6,15 @@ document.addEventListener('DOMContentLoaded', () => {
   initModal();
   initViewToggle();
   initBusca();
+  carregarFuncionarios();
 });
+
+/* ============================================================
+   LISTA GLOBAL DE FUNCIONÁRIOS
+   ============================================================ */
+
+let funcionariosLista = [];
+let funcionarioEditando = null;
 
 /* ---- Modal ---- */
 function initModal() {
@@ -67,20 +75,302 @@ function gerarMatricula() {
   if (el) el.value = 'Gerada pelo sistema';
 }
 
-function salvarFuncionario() {
+async function salvarFuncionario() {
+
   const nome = document.getElementById('f-nome').value.trim();
   const cpf  = document.getElementById('f-cpf').value.trim();
+  const email = document.getElementById('f-email')?.value.trim();
+  const telefone = document.getElementById('f-telefone')?.value.trim();
+  const cargo = document.getElementById('f-cargo')?.value.trim();
   const setor = document.getElementById('f-setor').value;
   const turno = document.getElementById('f-turno').value;
+  const admissao = document.getElementById('f-admissao')?.value;
 
   if (!nome || !cpf || !setor || !turno) {
     alert('Preencha os campos obrigatórios.');
     return;
   }
 
-  // TODO: enviar para o backend via fetch/axios
-  console.log('Salvar funcionário:', { nome, cpf, setor, turno });
-  fecharModal();
+  try {
+
+    if (!window.sb) {
+      alert("Supabase não conectado.");
+      return;
+    }
+
+let query;
+
+if(funcionarioEditando){
+
+  query = window.sb
+    .from("funcionarios")
+    .update({
+      nome: nome,
+      cpf: cpf,
+      email: email,
+      telefone: telefone,
+      cargo: cargo,
+      setor: setor,
+      turno: turno,
+      data_admissao: admissao
+    })
+    .eq("id", funcionarioEditando);
+
+}else{
+
+  query = window.sb
+    .from("funcionarios")
+    .insert([
+      {
+        nome: nome,
+        cpf: cpf,
+        email: email,
+        telefone: telefone,
+        cargo: cargo,
+        setor: setor,
+        turno: turno,
+        data_admissao: admissao
+      }
+    ]);
+
+}
+
+const { data, error } = await query;
+
+    if (error) {
+      console.error(error);
+      alert("Erro ao salvar funcionário.");
+      return;
+    }
+
+    console.log("Funcionário criado:", data);
+
+    fecharModal();
+    funcionarioEditando = null;
+
+    carregarFuncionarios();
+
+  } catch (err) {
+
+    console.error("Erro:", err);
+    alert("Erro ao salvar funcionário.");
+
+  }
+
+}
+
+/* ============================================================
+   CARREGAR FUNCIONÁRIOS (SUPABASE)
+   ============================================================ */
+
+async function carregarFuncionarios(){
+
+  if(!window.sb) return;
+
+  try{
+
+    const { data, error } = await window.sb
+      .from("funcionarios")
+      .select("*")
+      .order("nome");
+
+    if(error){
+      console.error("Erro ao buscar funcionários", error);
+      return;
+    }
+
+    funcionariosLista = data || [];
+
+renderizarFuncionarios(funcionariosLista);
+
+    /* Aqui depois vamos renderizar tabela e cards */
+
+  }catch(err){
+
+    console.error("Erro carregando funcionários:", err);
+
+  }
+
+}
+
+/* ============================================================
+   KPIs FUNCIONÁRIOS
+   ============================================================ */
+
+function atualizarKPIs(lista){
+
+  const total = lista.length;
+
+  const ativos = lista.filter(f => f.status === "ativo").length;
+
+  const inativos = lista.filter(f => f.status === "inativo").length;
+
+  const semBio = lista.filter(f => !f.biometria_cadastrada).length;
+
+  const elTotal = document.getElementById("kpi-total");
+  const elAtivos = document.getElementById("kpi-ativos");
+  const elInativos = document.getElementById("kpi-inativos");
+  const elBio = document.getElementById("kpi-biometria");
+
+  if(elTotal) elTotal.textContent = total;
+  if(elAtivos) elAtivos.textContent = ativos;
+  if(elInativos) elInativos.textContent = inativos;
+  if(elBio) elBio.textContent = semBio;
+
+}
+
+/* ============================================================
+   RENDERIZAR FUNCIONÁRIOS
+   ============================================================ */
+
+function renderizarFuncionarios(lista){
+  atualizarKPIs(lista);
+
+  const tbody = document.getElementById("func-tbody");
+  const empty = document.getElementById("func-empty");
+  const tableWrap = document.getElementById("func-table-wrap");
+  const totalLabel = document.getElementById("total-label");
+
+  tbody.innerHTML = "";
+
+  if(!lista || lista.length === 0){
+
+    empty.classList.remove("func-table-hidden");
+    tableWrap.classList.add("func-table-hidden");
+
+    totalLabel.textContent = "0 registros";
+
+    return;
+
+  }
+
+  empty.classList.add("func-table-hidden");
+  tableWrap.classList.remove("func-table-hidden");
+
+  totalLabel.textContent = lista.length + " registros";
+
+  lista.forEach(func => {
+
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+
+      <td><input type="checkbox"></td>
+
+      <td>
+        <div class="flex items-center gap-2">
+          <i class="ph ph-user"></i>
+          ${func.nome || ""}
+        </div>
+      </td>
+
+      <td>${func.matricula || "-"}</td>
+
+      <td>${func.setor || "-"}</td>
+
+      <td>${func.turno || "-"}</td>
+
+      <td>
+        <span class="badge badge-warning">
+          Pendente
+        </span>
+      </td>
+
+      <td>
+        <span class="badge ${
+          func.status === "ativo"
+            ? "badge-success"
+            : "badge-danger"
+        }">
+          ${func.status || "ativo"}
+        </span>
+      </td>
+
+      <td>
+        <button class="btn btn-ghost btn-sm btn-icon"
+          onclick="editarFuncionario('${func.id}')">
+
+          <i class="ph ph-pencil"></i>
+
+        </button>
+
+        <button class="btn btn-ghost btn-sm btn-icon"
+          onclick="excluirFuncionario('${func.id}')">
+
+          <i class="ph ph-trash"></i>
+
+        </button>
+      </td>
+
+    `;
+
+    tbody.appendChild(tr);
+
+  });
+
+}
+
+/* ============================================================
+   EDITAR FUNCIONÁRIO
+   ============================================================ */
+function editarFuncionario(id){
+
+  const func = funcionariosLista.find(f => f.id == id);
+
+  if(!func){
+    console.warn("Funcionário não encontrado");
+    return;
+  }
+
+  funcionarioEditando = func.id;
+
+  abrirModal(func);
+
+  document.getElementById('f-nome').value = func.nome || "";
+  document.getElementById('f-cpf').value = func.cpf || "";
+  document.getElementById('f-email').value = func.email || "";
+  document.getElementById('f-telefone').value = func.telefone || "";
+  document.getElementById('f-cargo').value = func.cargo || "";
+  document.getElementById('f-setor').value = func.setor || "";
+  document.getElementById('f-turno').value = func.turno || "";
+  document.getElementById('f-admissao').value = func.data_admissao || "";
+  document.getElementById('f-status').value = func.status || "ativo";
+
+}
+
+/* ============================================================
+   EXCLUIR FUNCIONÁRIO
+   ============================================================ */
+
+async function excluirFuncionario(id){
+
+  if(!confirm("Deseja excluir este funcionário?"))
+    return;
+
+  try{
+
+    const { error } = await window.sb
+      .from("funcionarios")
+      .delete()
+      .eq("id", id);
+
+    if(error){
+
+      console.error(error);
+      alert("Erro ao excluir funcionário.");
+
+      return;
+
+    }
+
+    carregarFuncionarios();
+
+  }catch(err){
+
+    console.error(err);
+
+  }
+
 }
 
 /* ---- Alternância de view ---- */
@@ -107,8 +397,34 @@ function initViewToggle() {
 
 /* ---- Busca (frontend — será substituída por API) ---- */
 function initBusca() {
-  document.getElementById('input-busca').addEventListener('input', function () {
-    // TODO: filtrar tabela ou chamar API com debounce
-    console.log('Buscar:', this.value);
+
+  const input = document.getElementById('input-busca');
+
+  if(!input) return;
+
+  input.addEventListener('input', function () {
+
+    const termo = this.value.toLowerCase().trim();
+
+    if(!termo){
+
+      renderizarFuncionarios(funcionariosLista);
+      return;
+
+    }
+
+    const filtrados = funcionariosLista.filter(func => {
+
+      return (
+        (func.nome || "").toLowerCase().includes(termo) ||
+        (func.matricula || "").toLowerCase().includes(termo) ||
+        (func.setor || "").toLowerCase().includes(termo)
+      );
+
+    });
+
+    renderizarFuncionarios(filtrados);
+
   });
+
 }

@@ -72,6 +72,72 @@ function usuarioEstaLogado(){
 }
 
 /* ==========================================================
+   RESTAURAR SESSÃO SUPABASE
+   ========================================================== */
+
+async function restaurarSessaoSupabase(){
+
+    if(!window.sb) return null;
+
+    try{
+
+        const { data, error } =
+            await window.sb.auth.getSession();
+
+        if(error){
+            console.warn("Erro ao obter sessão Supabase");
+            return null;
+        }
+
+        const session = data?.session;
+
+        if(!session || !session.user){
+            return null;
+        }
+
+        const user = session.user;
+
+        /* BUSCAR PERFIL NA TABELA USUARIOS */
+
+        const { data: perfil, error: perfilError } =
+            await window.sb
+                .from("usuarios")
+                .select("id,nome,perfil")
+                .eq("auth_id", user.id)
+                .single();
+
+        if(perfilError || !perfil){
+            console.warn("Usuário autenticado mas sem registro interno.");
+            return null;
+        }
+
+        const usuario = {
+            id: perfil.id,
+            auth_id: user.id,
+            email: user.email,
+            nome: perfil.nome,
+            perfil: perfil.perfil
+        };
+
+        definirUsuarioSessao(usuario);
+
+        console.log("Sessão restaurada via Supabase");
+
+        return usuario;
+
+    }catch(err){
+
+        console.error("Erro restaurando sessão:", err);
+
+        return null;
+
+    }
+
+}
+
+}
+
+/* ==========================================================
    EXPOR GLOBAL
    ========================================================== */
 
@@ -80,6 +146,7 @@ window.sessionCRV = {
     obterUsuarioLogado,
     definirUsuarioSessao,
     encerrarSessao,
-    usuarioEstaLogado
+    usuarioEstaLogado,
+    restaurarSessaoSupabase
 
 };

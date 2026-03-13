@@ -44,6 +44,38 @@ function possuiPermissao(perfilNecessario){
 
     return nivelUsuario >= nivelNecessario;
 
+    }
+
+/* ==========================================================
+   PROTEGER PÁGINA POR PERFIL
+   ========================================================== */
+
+function protegerPagina(perfilNecessario){
+
+    const perfilUsuario = obterPerfilAtual();
+
+    if(!perfilUsuario){
+
+        console.warn("Usuário não autenticado");
+
+        window.location.href = "login.html";
+
+        return;
+
+    }
+
+    if(!possuiPermissao(perfilNecessario)){
+
+        console.warn("Acesso negado para perfil:", perfilUsuario);
+
+        alert("Você não possui permissão para acessar esta página.");
+
+        window.location.href = "dashboard.html";
+
+    }
+
+}
+
 }
 
 /* ==========================================================
@@ -69,6 +101,24 @@ function aplicarPermissoesUI(){
 }
 
 /* ==========================================================
+   AUTO APLICAR PERMISSÕES NA UI
+   ========================================================== */
+
+document.addEventListener("DOMContentLoaded", ()=>{
+
+    try{
+
+        aplicarPermissoesUI();
+
+    }catch(e){
+
+        console.warn("Erro aplicando permissões UI");
+
+    }
+
+});
+
+/* ==========================================================
    EXPOR GLOBAL
    ========================================================== */
 
@@ -76,6 +126,7 @@ window.permissoesCRV = {
 
     obterPerfilAtual,
     possuiPermissao,
-    aplicarPermissoesUI
+    aplicarPermissoesUI,
+    protegerPagina
 
 };
