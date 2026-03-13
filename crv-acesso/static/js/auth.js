@@ -97,14 +97,34 @@ async function fazerLogin(email, senha, lembrar){
 
                     console.log("✅ Login Supabase OK");
 
-                    const usuario = {
-                        id: data.user.id,
-                        email: data.user.email,
-                        nome: data.user.user_metadata?.nome || "Usuário",
-                        perfil: "admin"
-                    };
+                    /* =====================================
+   BUSCAR PERFIL REAL DO USUÁRIO
+===================================== */
 
-                    salvarUsuarioLocal(usuario);
+const { data: perfilData, error: perfilError } =
+    await window.sb
+        .from("usuarios")
+        .select("id, nome, perfil")
+        .eq("auth_id", data.user.id)
+        .single();
+
+if(perfilError || !perfilData){
+
+    console.error("Usuário autenticado mas não encontrado na tabela.");
+
+    throw new Error("Usuário não possui permissão no sistema.");
+
+}
+
+const usuario = {
+    id: perfilData.id,
+    auth_id: data.user.id,
+    email: data.user.email,
+    nome: perfilData.nome,
+    perfil: perfilData.perfil
+};
+
+salvarUsuarioLocal(usuario);
 
                     if(lembrar){
                         localStorage.setItem("lembrar_me","true");
@@ -169,12 +189,47 @@ async function fazerLogin(email, senha, lembrar){
 /* ==========================================================
    LOGOUT GLOBAL
    ========================================================== */
+async function fazerLogout(){
 
-function fazerLogout(){
+    try{
 
-    limparUsuarioLocal();
+        console.log("🚪 Fazendo logout...");
 
-    window.location.href = ROTA_LOGIN;
+        /* ENCERRAR SESSÃO SUPABASE */
+
+        if(window.sb){
+
+            try{
+
+                await window.sb.auth.signOut();
+
+                console.log("✅ Sessão Supabase encerrada");
+
+            }catch(e){
+
+                console.warn("Erro ao encerrar sessão Supabase", e);
+
+            }
+
+        }
+
+        /* LIMPAR SESSÃO LOCAL */
+
+        limparUsuarioLocal();
+
+        /* REDIRECIONAR */
+
+        window.location.href = ROTA_LOGIN;
+
+    }catch(err){
+
+        console.error("Erro no logout:", err);
+
+        limparUsuarioLocal();
+
+        window.location.href = ROTA_LOGIN;
+
+    }
 
 }
 
@@ -218,10 +273,11 @@ function protegerPagina(){
 
 document.addEventListener("DOMContentLoaded", ()=>{
 
-    const path = window.location.pathname;
+const paginaAtual =
+    window.location.pathname.split("/").pop();
 
-    const paginaLogin =
-        path.includes("login");
+const paginaLogin =
+    paginaAtual === "login.html";
 
     /* SE NÃO FOR LOGIN -> PROTEGER */
 
