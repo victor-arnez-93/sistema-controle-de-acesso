@@ -79,6 +79,51 @@ async function fazerLogin(email, senha, lembrar){
 
         console.log("🔐 Tentando login...");
 
+        /* =====================================
+           TENTAR LOGIN SUPABASE
+        ===================================== */
+
+        if(window.sb){
+
+            try{
+
+                const { data, error } =
+                    await window.sb.auth.signInWithPassword({
+                        email: email,
+                        password: senha
+                    });
+
+                if(!error && data?.user){
+
+                    console.log("✅ Login Supabase OK");
+
+                    const usuario = {
+                        id: data.user.id,
+                        email: data.user.email,
+                        nome: data.user.user_metadata?.nome || "Usuário",
+                        perfil: "admin"
+                    };
+
+                    salvarUsuarioLocal(usuario);
+
+                    if(lembrar){
+                        localStorage.setItem("lembrar_me","true");
+                    }
+
+                    window.location.href = ROTA_DASHBOARD;
+
+                    return;
+
+                }
+
+            }catch(e){
+
+                console.warn("Supabase não respondeu, tentando login local");
+
+            }
+
+        }
+
         /* LOGIN DE TESTE */
 
         if(
