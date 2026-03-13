@@ -33,11 +33,15 @@ function initModal() {
     if (btn) btn.addEventListener('click', () => fecharModal());
   });
 
+if (overlay) {
   overlay.addEventListener('click', (e) => {
     if (e.target === overlay) fecharModal();
   });
+}
 
+  if (btnSalvar) {
   btnSalvar.addEventListener('click', () => salvarFuncionario());
+}
 }
 
 function abrirModal(dados = null) {
@@ -326,15 +330,25 @@ function editarFuncionario(id){
 
   abrirModal(func);
 
-  document.getElementById('f-nome').value = func.nome || "";
-  document.getElementById('f-cpf').value = func.cpf || "";
-  document.getElementById('f-email').value = func.email || "";
-  document.getElementById('f-telefone').value = func.telefone || "";
-  document.getElementById('f-cargo').value = func.cargo || "";
-  document.getElementById('f-setor').value = func.setor || "";
-  document.getElementById('f-turno').value = func.turno || "";
-  document.getElementById('f-admissao').value = func.data_admissao || "";
-  document.getElementById('f-status').value = func.status || "ativo";
+  const map = {
+  'f-nome': func.nome,
+  'f-cpf': func.cpf,
+  'f-email': func.email,
+  'f-telefone': func.telefone,
+  'f-cargo': func.cargo,
+  'f-setor': func.setor,
+  'f-turno': func.turno,
+  'f-admissao': func.data_admissao
+};
+
+Object.entries(map).forEach(([id,val])=>{
+  const el = document.getElementById(id);
+  if(el) el.value = val || "";
+});
+  const statusField = document.getElementById('f-status');
+if(statusField){
+  statusField.value = func.status || "ativo";
+}
 
 }
 
@@ -380,12 +394,14 @@ function initViewToggle() {
   const viewTab   = document.getElementById('view-tabela');
   const viewCards = document.getElementById('view-cards');
 
-  btnTabela.addEventListener('click', () => {
+  if(btnTabela){
+btnTabela.addEventListener('click', () => {
     btnTabela.classList.add('active');
     btnCards.classList.remove('active');
     viewTab.style.display   = '';
     viewCards.classList.add('func-table-hidden');
   });
+  }
 
   btnCards.addEventListener('click', () => {
     btnCards.classList.add('active');
