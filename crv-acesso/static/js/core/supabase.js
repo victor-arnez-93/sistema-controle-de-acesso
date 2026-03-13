@@ -15,8 +15,8 @@
    → API
 */
 
-const SUPABASE_URL = "https://SEU_PROJETO.supabase.co";
-const SUPABASE_ANON_KEY = "SUA_PUBLIC_ANON_KEY";
+const SUPABASE_URL = "https://sgimbhlstkfznkkonjej.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNnaW1iaGxzdGtmem5ra29uamVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MTMxMTksImV4cCI6MjA4ODk4OTExOX0.UEWNh1MDIRc-P6EbCs3lMJsz1g_VWYrzXvu8p46UMdI";
 
 /* ==========================================================
    INICIALIZAÇÃO
