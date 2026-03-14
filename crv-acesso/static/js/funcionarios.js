@@ -235,12 +235,17 @@ function renderizarFuncionarios(lista){
   const tableWrap = document.getElementById("func-table-wrap");
   const totalLabel = document.getElementById("total-label");
 
-  tbody.innerHTML = "";
+  if(!tbody) {
+  console.error("Tabela de funcionários não encontrada");
+  return;
+}
+
+tbody.innerHTML = "";
 
   if(!lista || lista.length === 0){
 
-    empty.classList.remove("func-table-hidden");
-    tableWrap.classList.add("func-table-hidden");
+    if(empty) empty.classList.remove("func-table-hidden");
+    if(tableWrap) tableWrap.classList.add("func-table-hidden");
 
     totalLabel.textContent = "0 registros";
 
@@ -248,10 +253,12 @@ function renderizarFuncionarios(lista){
 
   }
 
-  empty.classList.add("func-table-hidden");
-  tableWrap.classList.remove("func-table-hidden");
+  if(empty) empty.classList.add("func-table-hidden");
+  if(tableWrap) tableWrap.classList.remove("func-table-hidden");
 
+  if(totalLabel){
   totalLabel.textContent = lista.length + " registros";
+}
 
   lista.forEach(func => {
 
