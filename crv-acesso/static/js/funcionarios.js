@@ -46,122 +46,23 @@ if (overlay) {
 
 function abrirModal(dados = null) {
   const overlay = document.getElementById('modal-funcionario');
-  const titulo  = document.getElementById('modal-titulo');
+  const titulo = document.getElementById('modal-titulo');
 
   if (dados) {
     titulo.innerHTML = '<i class="ph ph-pencil-simple"></i> Editar Funcionário';
-    // TODO: preencher campos com dados do backend
   } else {
     titulo.innerHTML = '<i class="ph ph-user-plus"></i> Novo Funcionário';
     limparModal();
     gerarMatricula();
+    carregarEmpresasParaSelect();
   }
 
   overlay.classList.remove('func-table-hidden');
   document.body.style.overflow = 'hidden';
 }
 
-function fecharModal() {
-  document.getElementById('modal-funcionario').classList.add('func-table-hidden');
-  document.body.style.overflow = '';
-}
 
-function limparModal() {
-  ['f-nome','f-cpf','f-email','f-telefone','f-cargo',
-   'f-setor','f-turno','f-admissao','f-nivel','f-grupo'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.value = '';
-  });
-}
 
-function gerarMatricula() {
-  const el = document.getElementById('f-matricula');
-  if (el) el.value = 'Gerada pelo sistema';
-}
-
-async function salvarFuncionario() {
-
-  const nome = document.getElementById('f-nome').value.trim();
-  const cpf  = document.getElementById('f-cpf').value.trim();
-  const email = document.getElementById('f-email')?.value.trim();
-  const telefone = document.getElementById('f-telefone')?.value.trim();
-  const cargo = document.getElementById('f-cargo')?.value.trim();
-  const setor = document.getElementById('f-setor').value;
-  const turno = document.getElementById('f-turno').value;
-  const admissao = document.getElementById('f-admissao')?.value;
-
-  if (!nome || !cpf || !setor || !turno) {
-    alert('Preencha os campos obrigatórios.');
-    return;
-  }
-
-  try {
-
-    if (!window.sb) {
-      alert("Supabase não conectado.");
-      return;
-    }
-
-let query;
-
-if(funcionarioEditando){
-
-  query = window.sb
-    .from("funcionarios")
-    .update({
-      nome: nome,
-      cpf: cpf,
-      email: email,
-      telefone: telefone,
-      cargo: cargo,
-      setor: setor,
-      turno: turno,
-      data_admissao: admissao
-    })
-    .eq("id", funcionarioEditando);
-
-}else{
-
-  query = window.sb
-    .from("funcionarios")
-    .insert([
-      {
-        nome: nome,
-        cpf: cpf,
-        email: email,
-        telefone: telefone,
-        cargo: cargo,
-        setor: setor,
-        turno: turno,
-        data_admissao: admissao
-      }
-    ]);
-
-}
-
-const { data, error } = await query;
-
-    if (error) {
-      console.error(error);
-      alert("Erro ao salvar funcionário.");
-      return;
-    }
-
-    console.log("Funcionário criado:", data);
-
-    fecharModal();
-    funcionarioEditando = null;
-
-    carregarFuncionarios();
-
-  } catch (err) {
-
-    console.error("Erro:", err);
-    alert("Erro ao salvar funcionário.");
-
-  }
-
-}
 
 /* ============================================================
    CARREGAR FUNCIONÁRIOS (SUPABASE)

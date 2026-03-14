@@ -181,137 +181,56 @@
     </div>
 
     <div class="modal-body">
-
-      <!-- Avatar / Foto -->
-      <div class="func-modal-avatar-wrap">
-        <div class="func-modal-avatar" id="modal-avatar-preview">
-          <i class="ph ph-user"></i>
-        </div>
-        <div class="flex flex-col gap-1">
-          <button class="btn btn-ghost btn-sm">
-            <i class="ph ph-camera"></i> Foto
-          </button>
-          <span class="text-xs text-muted">JPG ou PNG · máx 2MB</span>
-        </div>
-      </div>
-
-      <!-- Dados pessoais -->
-      <div class="modal-section-title">Dados Pessoais</div>
-      <div class="form-grid-2">
-        <div class="form-group">
-          <label class="form-label">Nome completo <span class="form-required">*</span></label>
-          <input type="text" class="form-control" id="f-nome" placeholder="Nome do funcionário">
-        </div>
-        <div class="form-group">
-          <label class="form-label">CPF <span class="form-required">*</span></label>
-          <input type="text" class="form-control" id="f-cpf" placeholder="000.000.000-00">
-        </div>
-        <div class="form-group">
-          <label class="form-label">E-mail</label>
-          <input type="email" class="form-control" id="f-email" placeholder="email@empresa.com">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Telefone</label>
-          <input type="text" class="form-control" id="f-telefone" placeholder="(00) 00000-0000">
-        </div>
-      </div>
-
-      <!-- Dados corporativos -->
-      <div class="modal-section-title">Dados Corporativos</div>
-      <div class="form-grid-2">
-        <div class="form-group">
-          <label class="form-label">Matrícula <span class="form-required">*</span></label>
-          <input type="text" class="form-control" id="f-matricula" placeholder="Gerada automaticamente" readonly>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Cargo</label>
-          <input type="text" class="form-control" id="f-cargo" placeholder="Ex: Analista de TI">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Setor <span class="form-required">*</span></label>
-          <select class="form-control" id="f-setor">
-            <option value="">Selecione...</option>
-            <option>Operações</option>
-            <option>Administrativo</option>
-            <option>TI</option>
-            <option>RH</option>
-            <option>Financeiro</option>
-            <option>Segurança</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Turno <span class="form-required">*</span></label>
-          <select class="form-control" id="f-turno">
-            <option value="">Selecione...</option>
-            <option>Manhã</option>
-            <option>Tarde</option>
-            <option>Noite</option>
-            <option>Integral</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Data de admissão</label>
-          <input type="date" class="form-control" id="f-admissao">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Status</label>
-          <select class="form-control" id="f-status">
-            <option value="ativo">Ativo</option>
-            <option value="inativo">Inativo</option>
-            <option value="pendente">Pendente</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Acesso -->
-      <div class="modal-section-title">Controle de Acesso</div>
-      <div class="form-grid-2">
-        <div class="form-group">
-          <label class="form-label">Nível de acesso</label>
-          <select class="form-control" id="f-nivel">
-            <option value="">Selecione...</option>
-            <option>Básico</option>
-            <option>Intermediário</option>
-            <option>Avançado</option>
-            <option>Administrador</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Grupo de acesso</label>
-          <select class="form-control" id="f-grupo">
-            <option value="">Selecione...</option>
-            <option>Grupo padrão</option>
-            <option>Área restrita</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Biometria -->
-      <div class="func-bio-section">
-        <div class="modal-section-title">Biometria</div>
-        <div class="func-bio-grid">
-          <div class="func-bio-item pendente">
-            <i class="ph ph-fingerprint"></i>
-            <span>Digital</span>
-            <span class="badge badge-warning">Pendente</span>
-          </div>
-          <div class="func-bio-item pendente">
-            <i class="ph ph-scan"></i>
-            <span>Facial</span>
-            <span class="badge badge-warning">Pendente</span>
-          </div>
-          <div class="func-bio-item pendente">
-            <i class="ph ph-credit-card"></i>
-            <span>Cartão</span>
-            <span class="badge badge-warning">Pendente</span>
-          </div>
-        </div>
-        <p class="text-xs text-muted mt-2">
-          <i class="ph ph-info"></i> O cadastro biométrico é realizado diretamente no equipamento Control iD após salvar o funcionário.
-        </p>
-      </div>
-
+  <!-- Avatar Foto (MANTER SEU CÓDIGO ORIGINAL) -->
+  <div class="func-modal-avatar-wrap">
+    <div class="func-modal-avatar" id="modal-avatar-preview">
+      <i class="ph ph-user"></i>
     </div>
+    <div class="flex flex-col gap-1">
+      <button class="btn btn-ghost btn-sm">
+        <i class="ph ph-camera"></i> Foto
+      </button>
+      <span class="text-xs text-muted">JPG ou PNG máx 2MB</span>
+    </div>
+  </div>
+
+  <!-- Dados Pessoais -->
+  <div class="modal-section-title">Dados Pessoais</div>
+  <div class="form-grid-2">
+    <div class="form-group">
+      <label class="form-label">Nome completo <span class="form-required">*</span></label>
+      <input type="text" class="form-control" id="f-nome" placeholder="Nome do funcionário" required>
+    </div>
+    <div class="form-group">
+      <label class="form-label">CPF <span class="form-required">*</span></label>
+      <input type="text" class="form-control" id="f-cpf" placeholder="000.000.000-00" maxlength="14" required>
+    </div>
+  </div>
+
+  <!-- Dados Corporativos -->
+  <div class="modal-section-title">Dados Corporativos</div>
+  <div class="form-grid-2">
+    <div class="form-group">
+      <label class="form-label"><i class="ph ph-building"></i> Empresa <span class="form-required">*</span></label>
+      <select class="form-control" id="f-emp_id" required>
+        <option value="">Carregando empresas...</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label"><i class="ph ph-hashtag"></i> Matrícula <span class="form-required">*</span></label>
+      <input type="text" class="form-control" id="f-matricula" placeholder="MAT20261234" required>
+    </div>
+    <div class="form-group">
+      <label class="form-label"><i class="ph ph-briefcase"></i> Cargo <span class="form-required">*</span></label>
+      <input type="text" class="form-control" id="f-cargo" placeholder="Ex: Analista de TI" required>
+    </div>
+    <div class="form-group checkbox-group">
+      <label class="form-label"><i class="ph ph-toggle-right"></i> Ativo</label>
+      <input type="checkbox" id="f-ativo" checked>
+    </div>
+  </div>
+</div>
+
 
     <div class="modal-footer">
       <button class="btn btn-ghost" id="btn-cancelar">Cancelar</button>
