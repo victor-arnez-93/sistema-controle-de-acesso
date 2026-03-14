@@ -29,6 +29,7 @@ function initModal() {
     if (btn) btn.addEventListener('click', () => abrirModal());
   });
 
+
   [btnFechar, btnCancel].forEach(btn => {
     if (btn) btn.addEventListener('click', () => fecharModal());
   });
@@ -61,6 +62,59 @@ function abrirModal(dados = null) {
   document.body.style.overflow = 'hidden';
 }
 
+function fecharModal() {
+  document.getElementById('modal-funcionario').classList.add('func-table-hidden');
+  document.body.style.overflow = '';
+}
+
+function limparModal() {
+  ['f-emp_id', 'f-nome', 'f-cpf', 'f-matricula', 'f-cargo'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+
+  const ativo = document.getElementById('f-ativo');
+  if (ativo) ativo.checked = true;
+}
+
+function gerarMatricula() {
+  const el = document.getElementById('f-matricula');
+  if (el) {
+    const ano = new Date().getFullYear();
+    const random = Math.floor(Math.random() * 10000);
+    el.value = `MAT${ano}${random.toString().padStart(4, '0')}`;
+  }
+}
+
+async function carregarEmpresasParaSelect() {
+  if (!window.sb) {
+    console.warn('Supabase não conectado');
+    return;
+  }
+
+  const select = document.getElementById('f-emp_id');
+  if (!select) return;
+
+  select.innerHTML = '<option value="">Carregando empresas...</option>';
+
+  const { data, error } = await window.sb
+    .from('empresas')
+    .select('id, nome')
+    .eq('ativo', true)
+    .order('nome');
+
+  if (error) {
+    console.error('Erro empresas:', error);
+    select.innerHTML = '<option value="">Erro carregando empresas</option>';
+    return;
+  }
+
+  select.innerHTML = '<option value="">Selecione empresa...</option>';
+  data?.forEach(emp => {
+    const opt = new Option(emp.nome, emp.id);
+    select.add(opt);
+  });
+}
 
 
 
