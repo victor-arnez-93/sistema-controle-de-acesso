@@ -345,145 +345,280 @@ tbody td{
 }
 
 /* ============================================================
-   MODAL
-   ============================================================ */
-/* ============================================================
-   MODAL
-   ============================================================ */
+MODAL — padrão global do sistema
+============================================================ */
 
+/* Overlay centralizado com blur */
 .modal-overlay{
-
   position:fixed;
   inset:0;
-
-  display:none;
-
-  align-items:center;
-  justify-content:center;
-
-  padding:32px;
-
-  background:rgba(0,0,0,.55);
-  backdrop-filter:blur(4px);
-
   z-index:9999;
 
-}
-
-.modal-overlay.active{
-
-  display:flex;
-
-}
-
-.modal{
-
-  width:680px;
-  max-width:92vw;
-
-  max-height:85vh;
-
-  background:var(--surface);
-
-  border:1px solid var(--border);
-  border-radius:var(--radius-md);
-
-  box-shadow:var(--shadow-lg);
-
-  display:flex;
-  flex-direction:column;
-
-  overflow:hidden;
-
-}
-
-.modal-header{
-
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-
-  padding:20px 24px;
-
-  border-bottom:1px solid var(--border);
-
-}
-
-.modal-title{
-
-  display:flex;
-  align-items:center;
-  gap:10px;
-
-  font-family:'Rajdhani',sans-serif;
-  font-size:1.1rem;
-
-}
-
-.modal-close{
-
-  width:36px;
-  height:36px;
-
-  border-radius:8px;
-  border:1px solid var(--border);
-
-  background:var(--surface-2);
-
   display:flex;
   align-items:center;
   justify-content:center;
 
-  cursor:pointer;
+  background:rgba(0,0,0,0.55);
+  backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
 
-  transition:all var(--transition);
-
+  padding:20px;
 }
 
-.modal-close:hover{
-
-  background:var(--danger);
-  border-color:var(--danger);
-
-  color:white;
-
+/* Estado escondido */
+.modal-overlay.func-table-hidden{
+  display:none !important;
 }
 
-.modal-body{
 
-  padding:24px;
+/* ============================================================
+CONTAINER DO MODAL
+============================================================ */
 
-  display:flex;
-  flex-direction:column;
+.func-modal{
 
-  gap:20px;
+  position:relative;
+
+  width:100%;
+  max-width:640px;
+  max-height:90vh;
 
   overflow-y:auto;
 
+  border-radius:16px;
+
+  padding:32px;
+
+  background:linear-gradient(
+    160deg,
+    rgba(18,22,34,0.98),
+    rgba(12,15,25,0.99)
+  );
+
+  border:1px solid rgba(0,220,200,0.18);
+
+  box-shadow:
+    0 0 0 1px rgba(0,220,200,0.08),
+    0 8px 40px rgba(0,0,0,0.55),
+    0 0 60px rgba(0,180,220,0.07);
+
+  color:var(--text,#e2e8f0);
+
+  animation:modalFadeIn .22s cubic-bezier(.22,1,.36,1) both;
+
 }
 
-.modal-footer{
 
-  padding:18px 24px;
+/* ============================================================
+TIPOS DE CREDENCIAL
+============================================================ */
 
-  border-top:1px solid var(--border);
+.cred-tipo-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
+  gap:12px;
+  margin-top:6px;
+}
+
+.cred-tipo-item{
 
   display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+
+  gap:6px;
+
+  height:80px;
+
+  border-radius:12px;
+
+  border:1px solid rgba(255,255,255,0.08);
+
+  background:rgba(255,255,255,0.02);
+
+  cursor:pointer;
+
+  transition:all .18s;
+
+  font-size:13px;
+  font-weight:500;
+
+}
+
+.cred-tipo-item i{
+  font-size:20px;
+  opacity:.8;
+}
+
+
+/* estado selecionado */
+
+.cred-tipo-item.selected{
+  border-color:var(--primary);
+  background:var(--primary-light);
+
+  box-shadow:
+    0 0 0 3px rgba(0,220,200,0.15),
+    0 0 18px rgba(0,220,200,0.1);
+}
+
+.cred-tipo-item:hover{
+  border-color:var(--primary);
+  background:var(--primary-light);
+}
+
+
+/* ============================================================
+FOOTER DO MODAL
+============================================================ */
+
+.func-modal .modal-footer{
+
+  display:flex;
+  align-items:center;
   justify-content:flex-end;
+
   gap:10px;
 
-}
+  margin-top:28px;
+  padding-top:20px;
 
-.form-grid-2{
-
-  display:grid;
-
-  grid-template-columns:1fr 1fr;
-
-  gap:16px;
+  border-top:1px solid rgba(255,255,255,0.06);
 
 }
 
+
+/* ============================================================
+TEMA CLARO
+============================================================ */
+
+[data-theme="light"] .func-modal,
+.light-mode .func-modal{
+
+  background:linear-gradient(160deg,#ffffff,#f4f6fb);
+
+  border:1px solid rgba(0,180,200,0.22);
+
+  box-shadow:
+    0 8px 40px rgba(0,0,0,0.10),
+    0 0 40px rgba(0,180,220,0.06);
+
+  color:#1a202c;
+
+}
+
+[data-theme="light"] .func-modal .modal-footer,
+.light-mode .func-modal .modal-footer{
+  border-top-color:#e2e8f0;
+}
+
+
+/* ============================================================
+ANIMAÇÃO
+============================================================ */
+
+@keyframes modalFadeIn{
+
+  from{
+    opacity:0;
+    transform:translateY(18px) scale(.98);
+  }
+
+  to{
+    opacity:1;
+    transform:translateY(0) scale(1);
+  }
+
+}
+
+
+/* ============================================================
+SCROLLBAR
+============================================================ */
+
+.func-modal::-webkit-scrollbar{
+  width:5px;
+}
+
+.func-modal::-webkit-scrollbar-track{
+  background:transparent;
+}
+
+.func-modal::-webkit-scrollbar-thumb{
+  background:rgba(0,220,200,0.2);
+  border-radius:99px;
+}
+
+/* ============================================================
+BOTÃO FECHAR MODAL (X) — padrão funcionários
+============================================================ */
+
+.func-modal-close{
+
+  position:absolute;
+
+  top:16px;
+  right:16px;
+
+  width:32px;
+  height:32px;
+
+  border-radius:8px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  background:rgba(255,255,255,0.05);
+  border:1px solid rgba(255,255,255,0.08);
+
+  color:inherit;
+
+  cursor:pointer;
+
+  font-size:16px;
+
+  transition:
+  background .2s,
+  border-color .2s,
+  color .2s;
+
+  z-index:10;
+
+}
+
+.func-modal-close:hover{
+
+  background:rgba(255,80,80,0.15);
+  border-color:rgba(255,80,80,0.35);
+
+  color:#ff6b6b;
+
+  box-shadow:0 0 12px rgba(255,80,80,0.2);
+
+}
+
+
+/* tema claro */
+
+[data-theme="light"] .func-modal-close,
+.light-mode .func-modal-close{
+
+  background:#f1f5f9;
+  border-color:#e2e8f0;
+  color:#64748b;
+
+}
+
+[data-theme="light"] .func-modal-close:hover,
+.light-mode .func-modal-close:hover{
+
+  background:#fee2e2;
+  border-color:#fca5a5;
+  color:#ef4444;
+
+}
 
 /* ============================================================
    GRID TIPOS
