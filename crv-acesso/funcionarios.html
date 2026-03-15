@@ -7,6 +7,7 @@
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
   <link rel="stylesheet" href="static/css/main.css">
   <link rel="stylesheet" href="static/css/funcionarios.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -23,10 +24,10 @@
         <p class="text-sm text-muted mt-1">Cadastro e gestão de colaboradores</p>
       </div>
       <div class="page-actions">
-        <button class="btn btn-ghost btn-sm">
+        <button class="btn btn-ghost btn-sm" id="btn-importar">
           <i class="ph ph-upload-simple"></i> Importar
         </button>
-        <button class="btn btn-ghost btn-sm">
+        <button class="btn btn-ghost btn-sm" id="btn-exportar">
           <i class="ph ph-download-simple"></i> Exportar
         </button>
         <button class="btn btn-primary btn-sm" id="btn-novo">
@@ -169,69 +170,70 @@
 
 <!-- Modal: Novo / Editar Funcionário -->
 <div class="modal-overlay func-table-hidden" id="modal-funcionario">
-  <div class="modal func-modal">
+  <div class="func-modal">
 
-    <div class="modal-header">
-      <h3 class="modal-title" id="modal-titulo">
-        <i class="ph ph-user-plus"></i> Novo Funcionário
-      </h3>
-      <button class="modal-close" id="modal-fechar">
-        <i class="ph ph-x"></i>
-      </button>
+    <!-- Botão fechar -->
+    <button class="func-modal-close" id="modal-fechar">
+      <i class="ph ph-x"></i>
+    </button>
+
+    <!-- Título -->
+    <div class="func-modal-title">
+      <i class="ph ph-user-plus"></i>
+      <span id="modal-titulo">Novo Funcionário</span>
     </div>
 
-    <div class="modal-body">
-  <!-- Avatar Foto (MANTER SEU CÓDIGO ORIGINAL) -->
-  <div class="func-modal-avatar-wrap">
-    <div class="func-modal-avatar" id="modal-avatar-preview">
-      <i class="ph ph-user"></i>
+    <!-- Avatar / Foto -->
+    <div class="func-modal-avatar-wrap">
+      <div class="func-modal-avatar" id="modal-avatar-preview">
+        <i class="ph ph-user"></i>
+      </div>
+      <div class="flex flex-col gap-1">
+        <input type="file" id="input-foto" accept="image/png, image/jpeg" style="display:none">
+        <button class="btn btn-ghost btn-sm" type="button" onclick="document.getElementById('input-foto').click()">
+          <i class="ph ph-camera"></i> Foto
+        </button>
+        <span class="text-xs text-muted">JPG ou PNG máx 2MB</span>
+      </div>
     </div>
-    <div class="flex flex-col gap-1">
-      <button class="btn btn-ghost btn-sm">
-        <i class="ph ph-camera"></i> Foto
-      </button>
-      <span class="text-xs text-muted">JPG ou PNG máx 2MB</span>
-    </div>
-  </div>
 
-  <!-- Dados Pessoais -->
-  <div class="modal-section-title">Dados Pessoais</div>
-  <div class="form-grid-2">
-    <div class="form-group">
-      <label class="form-label">Nome completo <span class="form-required">*</span></label>
-      <input type="text" class="form-control" id="f-nome" placeholder="Nome do funcionário" required>
+    <!-- Dados Pessoais -->
+    <div class="modal-section-title">Dados Pessoais</div>
+    <div class="form-grid-2">
+      <div class="form-group">
+        <label class="form-label">Nome completo <span class="form-required">*</span></label>
+        <input type="text" class="form-control" id="f-nome" placeholder="Nome do funcionário" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">CPF <span class="form-required">*</span></label>
+        <input type="text" class="form-control" id="f-cpf" placeholder="000.000.000-00" maxlength="14" required>
+      </div>
     </div>
-    <div class="form-group">
-      <label class="form-label">CPF <span class="form-required">*</span></label>
-      <input type="text" class="form-control" id="f-cpf" placeholder="000.000.000-00" maxlength="14" required>
-    </div>
-  </div>
 
-  <!-- Dados Corporativos -->
-  <div class="modal-section-title">Dados Corporativos</div>
-  <div class="form-grid-2">
-    <div class="form-group">
-      <label class="form-label"><i class="ph ph-building"></i> Empresa <span class="form-required">*</span></label>
-      <select class="form-control" id="f-emp_id" required>
-        <option value="">Carregando empresas...</option>
-      </select>
+    <!-- Dados Corporativos -->
+    <div class="modal-section-title">Dados Corporativos</div>
+    <div class="form-grid-2">
+      <div class="form-group">
+        <label class="form-label"><i class="ph ph-building"></i> Empresa <span class="form-required">*</span></label>
+        <select class="form-control" id="f-emp_id" required>
+          <option value="">Selecione a empresa...</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label"><i class="ph ph-hashtag"></i> Matrícula <span class="form-required">*</span></label>
+        <input type="text" class="form-control" id="f-matricula" placeholder="MAT20261234" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label"><i class="ph ph-briefcase"></i> Cargo <span class="form-required">*</span></label>
+        <input type="text" class="form-control" id="f-cargo" placeholder="Ex: Analista de TI" required>
+      </div>
+      <div class="form-group checkbox-group">
+        <label class="form-label"><i class="ph ph-toggle-right"></i> Ativo</label>
+        <input type="checkbox" id="f-ativo" checked>
+      </div>
     </div>
-    <div class="form-group">
-      <label class="form-label"><i class="ph ph-hashtag"></i> Matrícula <span class="form-required">*</span></label>
-      <input type="text" class="form-control" id="f-matricula" placeholder="MAT20261234" required>
-    </div>
-    <div class="form-group">
-      <label class="form-label"><i class="ph ph-briefcase"></i> Cargo <span class="form-required">*</span></label>
-      <input type="text" class="form-control" id="f-cargo" placeholder="Ex: Analista de TI" required>
-    </div>
-    <div class="form-group checkbox-group">
-      <label class="form-label"><i class="ph ph-toggle-right"></i> Ativo</label>
-      <input type="checkbox" id="f-ativo" checked>
-    </div>
-  </div>
-</div>
 
-
+    <!-- Footer -->
     <div class="modal-footer">
       <button class="btn btn-ghost" id="btn-cancelar">Cancelar</button>
       <button class="btn btn-primary" id="btn-salvar">
@@ -239,8 +241,8 @@
       </button>
     </div>
 
-  </div>
-</div>
+  </div><!-- fecha .func-modal -->
+</div><!-- fecha .modal-overlay -->
 
 <script src="static/js/main.js"></script>
 <script src="static/js/funcionarios.js"></script>
