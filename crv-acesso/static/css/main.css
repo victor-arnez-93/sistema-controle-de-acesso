@@ -18,6 +18,7 @@
   --accent-hover:      #e6bd38;
   --kpi-bg: #ffffff;
   --kpi-border: #dbe9ee;
+  --sidebar-border: rgba(4, 8, 15, 0.08);
 
   /* Superfícies */
   --bg:                #F4FFFD;
@@ -26,11 +27,11 @@
   --border:            #d0e8ed;
 
   /* Sidebar */
-  --sidebar-bg:        #011936;
-  --sidebar-text:      #c8dce8;
-  --sidebar-text-active: #ffffff;
-  --sidebar-item-hover:#012d54;
-  --sidebar-item-active:#0091AD;
+  --sidebar-bg:        #D3DBE5;
+  --sidebar-text:      #04080F;
+  --sidebar-text-active:#04080F;
+  --sidebar-item-hover:rgba(4, 8, 15, 0.06);
+  --sidebar-item-active:#b8c3d1;
 
   /* Textos */
   --text-primary:      #0f172a;   /* mais escuro para leitura */
@@ -78,6 +79,7 @@
   --sidebar-text-active:#ffffff;
   --sidebar-item-hover:#0d1a26;
   --sidebar-item-active:#0091AD;
+  --sidebar-border: rgba(255,255,255,0.06);
 
   --text-primary:#f1f5f9;
   --text-secondary:#cbd5e1;
@@ -292,7 +294,8 @@ a:hover { color: var(--primary-hover); }
   justify-content: space-between;
   padding: 0 16px;
   height: var(--header-height);
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  border-bottom: 1px solid var(--sidebar-border);
+  border-top: 1px solid var(--sidebar-border);
   flex-shrink: 0;
 }
 
@@ -440,7 +443,7 @@ a:hover { color: var(--primary-hover); }
 /* Rodapé sidebar — logo CRV */
 .sidebar-footer {
   padding: 14px 16px;
-  border-top: 1px solid rgba(255,255,255,0.06);
+  border-top: 1px solid var(--sidebar-border);
   flex-shrink: 0;
 }
 
