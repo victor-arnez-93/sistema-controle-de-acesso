@@ -17,7 +17,7 @@ const ROTA_LOGIN = "login.html";
 
 const USUARIO_TESTE = {
     id: "admin-local",
-    email: "login@sistema.com",
+    email: "admin@sistema.com",
     senha: "admin123",
     nome: "Administrador",
     perfil: "admin"
