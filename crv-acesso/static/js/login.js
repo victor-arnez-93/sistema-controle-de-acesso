@@ -26,7 +26,7 @@ function applyTheme(theme) {
 
 function initToggleSenha() {
   const btn   = document.getElementById('toggle-pass');
-  const input = document.getElementById('senha-input');
+  const input = document.getElementById('senha');
   const icon  = document.getElementById('olho-icon');
   if (!btn) return;
 

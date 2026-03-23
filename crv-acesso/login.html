@@ -28,36 +28,36 @@
 
       <div class="login-divider"></div>
 
-      <!-- Formulário -->
-      <div class="form-group">
-        <label class="form-label">E-mail</label>
-        <div class="input-icon-wrap">
-          <i class="ph ph-envelope input-icon"></i>
-          <input type="email" class="form-control" placeholder="seu@email.com" autocomplete="email">
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Senha</label>
-        <div class="input-icon-wrap">
-          <i class="ph ph-lock input-icon"></i>
-          <input type="password" class="form-control input-pass" id="senha-input" placeholder="••••••••" autocomplete="current-password">
-          <button class="btn-toggle-pass" id="toggle-pass" type="button">
-            <i class="ph ph-eye" id="olho-icon"></i>
-          </button>
-        </div>
-      </div>
-
       <div class="login-options">
         <label class="login-remember">
-          <input type="checkbox"> Lembrar acesso
+          <input type="checkbox" id="lembrar-me"> Lembrar acesso
         </label>
         <a data-href="recuperacao_senha" class="login-forgot">Esqueci minha senha</a>
       </div>
 
-      <button class="btn btn-primary btn-login" data-href="dashboard">
-        <i class="ph ph-sign-in"></i> Entrar
-      </button>
+      <form id="loginForm">
+
+  <div class="form-group">
+    <label class="form-label">E-mail</label>
+    <div class="input-icon-wrap">
+      <i class="ph ph-envelope input-icon"></i>
+      <input id="email" type="email" class="form-control" placeholder="seu@email.com">
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">Senha</label>
+    <div class="input-icon-wrap">
+      <i class="ph ph-lock input-icon"></i>
+      <input id="senha" type="password" class="form-control input-pass" placeholder="••••••••">
+    </div>
+  </div>
+
+  <button type="submit" class="btn btn-primary btn-login">
+    <i class="ph ph-sign-in"></i> Entrar
+  </button>
+
+</form>
 
       <div class="login-footer-links">
         <a data-href="recuperacao_senha"><i class="ph ph-lock-key"></i> Recuperar senha</a>
@@ -80,5 +80,6 @@
   </button>
 
   <script src="static/js/login.js"></script>
+  <script src="static/js/auth.js"></script>
 </body>
 </html>
