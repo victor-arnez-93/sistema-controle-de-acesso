@@ -1,18 +1,24 @@
 import os
-from flask import Flask, send_from_directory, abort
+from flask import Flask, send_from_directory
 
-app = Flask(__name__, static_folder='.', static_url_path='')
+app = Flask(__name__, static_folder='.')
 
+# Rota principal
 @app.route('/')
 def index():
     return send_from_directory('.', 'dashboard.html')
 
+# Servir arquivos estáticos corretamente
 @app.route('/<path:path>')
-def serve(path):
-    try:
+def static_files(path):
+    file_path = os.path.join('.', path)
+
+    if os.path.exists(file_path):
         return send_from_directory('.', path)
-    except:
-        abort(404)
+    else:
+        # fallback importante (SPA / navegação interna)
+        return send_from_directory('.', 'dashboard.html')
+
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 10000))
