@@ -184,7 +184,9 @@
       <label class="form-label">Funcionário <span class="form-required">*</span></label>
       <div class="input-icon-wrap">
         <i class="ph ph-user input-icon"></i>
-        <input type="text" class="form-control" id="cred-funcionario" placeholder="Buscar funcionário...">
+        <select id="cred-funcionario" class="form-control">
+        <option value="">Selecione o funcionário...</option>
+        </select>
       </div>
     </div>
 
@@ -277,6 +279,7 @@
   </div><!-- fecha .func-modal -->
 </div><!-- fecha .modal-overlay -->
 
+<script src="static/js/core/supabase.js"></script>
 <script src="static/js/main.js"></script>
 <script src="static/js/credenciais.js"></script>
 </body>

@@ -3,14 +3,27 @@
    Comportamentos globais: partials, tema, relógio, sidebar
    ============================================================ */
 
-document.addEventListener('DOMContentLoaded', () => {
-  loadPartials().then(() => {
-    initTheme();
-    initClock();
-    initSidebar();
-    setActivePage();
-    initNavegacao();
-  });
+document.addEventListener('DOMContentLoaded', async () => {
+
+  // inicia supabase
+  if (window.initSupabase) {
+    window.initSupabase();
+  }
+
+  // inicia banco offline
+  if (window.initDB) {
+    await window.initDB();
+  }
+
+  // resto
+  await loadPartials();
+
+  initTheme();
+  initClock();
+  initSidebar();
+  setActivePage();
+  initNavegacao();
+
 });
 
 /* ------------------------------------------------------------

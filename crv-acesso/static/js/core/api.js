@@ -1,59 +1,290 @@
-/* ==========================================================
-   API CRV - SUPABASE
-   ========================================================== */
+// ==========================================
+// API CRV — CAMADA CENTRAL (SEM MODULE)
+// ==========================================
 
-async function listarFuncionarios(){
 
-    const { data, error } =
-        await window.sb
-            .from("funcionarios")
-            .select("*")
-            .order("nome");
+// ==========================================
+// FUNCIONÁRIOS
+// ==========================================
 
-    if(error){
-        console.error(error);
-        return [];
+async function listarFuncionarios() {
+
+  const usuario = await window.getUsuario?.();
+  if (!usuario) return [];
+
+  // ONLINE
+  if (window.APP_NETWORK?.online) {
+
+    const sb = window.getSupabase();
+
+    const { data, error } = await sb
+      .from("funcionarios")
+      .select("*")
+      .eq("empresa_id", usuario.empresa_id)
+      .order("nome");
+
+    if (error) {
+      console.error("[API] listarFuncionarios:", error);
+      return [];
     }
 
     return data;
 
+  }
+
+  // OFFLINE
+  console.warn("[API] OFFLINE → listar local");
+
+  return await window.listarLocal("funcionarios");
+
 }
 
-async function criarFuncionario(payload){
 
-    const { error } =
-        await window.sb
-            .from("funcionarios")
-            .insert(payload);
+// ==========================================
+// CRIAR FUNCIONÁRIO
+// ==========================================
 
-    if(error){
-        console.error(error);
-        return false;
+async function criarFuncionario(payload) {
+
+  const usuario = await window.getUsuario?.();
+  if (!usuario) return false;
+
+  const data = {
+    ...payload,
+    empresa_id: usuario.empresa_id,
+    id: Date.now().toString()
+  };
+
+  // ONLINE
+  if (window.APP_NETWORK?.online) {
+
+    const sb = window.getSupabase();
+
+    const { error } = await sb
+      .from("funcionarios")
+      .insert([data]);
+
+    if (error) {
+      console.error("[API] criarFuncionario:", error);
+      return false;
     }
 
     return true;
 
+  }
+
+  // OFFLINE
+  console.warn("[API] OFFLINE → salvando local");
+
+  await window.salvarLocal("funcionarios", data);
+
+  await window.adicionarFila(
+    window.montarItemFila("funcionarios", "insert", data)
+  );
+
+  return true;
+
 }
 
-async function atualizarFuncionario(id, payload){
 
-    const { error } =
-        await window.sb
-            .from("funcionarios")
-            .update(payload)
-            .eq("id", id);
+// ==========================================
+// ATUALIZAR FUNCIONÁRIO
+// ==========================================
 
-    if(error){
-        console.error(error);
-        return false;
+async function atualizarFuncionario(id, payload) {
+
+  const usuario = await window.getUsuario?.();
+  if (!usuario) return false;
+
+  const data = {
+    ...payload,
+    id,
+    empresa_id: usuario.empresa_id
+  };
+
+  // ONLINE
+  if (window.APP_NETWORK?.online) {
+
+    const sb = window.getSupabase();
+
+    const { error } = await sb
+      .from("funcionarios")
+      .update(data)
+      .eq("id", id);
+
+    if (error) {
+      console.error("[API] atualizarFuncionario:", error);
+      return false;
     }
 
     return true;
 
+  }
+
+  // OFFLINE
+  console.warn("[API] OFFLINE → update local");
+
+  await window.salvarLocal("funcionarios", data);
+
+  await window.adicionarFila(
+    window.montarItemFila("funcionarios", "update", data)
+  );
+
+  return true;
+
 }
+
+
+// ==========================================
+// DELETAR FUNCIONÁRIO
+// ==========================================
+
+async function deletarFuncionario(id) {
+
+  // ONLINE
+  if (window.APP_NETWORK?.online) {
+
+    const sb = window.getSupabase();
+
+    const { error } = await sb
+      .from("funcionarios")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      console.error("[API] deletarFuncionario:", error);
+      return false;
+    }
+
+    return true;
+
+  }
+
+  // OFFLINE
+  console.warn("[API] OFFLINE → delete local");
+
+  await window.adicionarFila(
+    window.montarItemFila("funcionarios", "delete", { id })
+  );
+
+  return true;
+
+}
+
+
+// ==========================================
+// DASHBOARD — KPIs
+// ==========================================
+
+async function getKPIsDashboard() {
+
+  const usuario = await window.getUsuario?.();
+  if (!usuario) return null;
+
+  // ONLINE
+  if (window.APP_NETWORK?.online) {
+
+    const sb = window.getSupabase();
+
+    try {
+
+      const hoje = new Date().toISOString().split("T")[0];
+
+      const [funcRes, acessosRes] = await Promise.all([
+
+        sb.from("funcionarios")
+          .select("id, ativo")
+          .eq("empresa_id", usuario.empresa_id),
+
+        sb.from("acessos")
+          .select("id")
+          .eq("empresa_id", usuario.empresa_id)
+          .gte("data", hoje)
+
+      ]);
+
+      const funcionarios = funcRes.data || [];
+      const acessosHoje = acessosRes.data || [];
+
+      return {
+        totalFuncionarios: funcionarios.length,
+        ativos: funcionarios.filter(f => f.ativo).length,
+        inativos: funcionarios.filter(f => !f.ativo).length,
+        acessosHoje: acessosHoje.length
+      };
+
+    } catch (err) {
+
+      console.error("[API] dashboard:", err);
+      return null;
+
+    }
+
+  }
+
+  // OFFLINE
+  const funcionarios = await window.listarLocal("funcionarios") || [];
+
+  return {
+    totalFuncionarios: funcionarios.length,
+    ativos: funcionarios.filter(f => f.ativo).length,
+    inativos: funcionarios.filter(f => !f.ativo).length,
+    acessosHoje: 0
+  };
+
+}
+
+// ==========================================
+// MONITORAMENTO — ACESSOS
+// ==========================================
+
+async function buscarAcessosRecentes() {
+
+  const usuario = await window.getUsuario?.();
+  if (!usuario) return [];
+
+  // ONLINE
+  if (window.APP_NETWORK?.online) {
+
+    const sb = window.getSupabase();
+
+    if (!sb) {
+      console.warn("[API] Supabase não disponível");
+      return [];
+    }
+
+    const { data, error } = await sb
+      .from("acessos")
+      .select("*")
+      .eq("empresa_id", usuario.empresa_id)
+      .order("data", { ascending: false })
+      .limit(50);
+
+    if (error) {
+      console.error("[API] buscarAcessosRecentes:", error);
+      return [];
+    }
+
+    return data || [];
+
+  }
+
+  // OFFLINE
+  console.warn("[API] OFFLINE → acessos local");
+
+  return await window.listarLocal?.("acessos") || [];
+
+}
+
+// ==========================================
+// EXPORT GLOBAL
+// ==========================================
 
 window.apiCRV = {
-    listarFuncionarios,
-    criarFuncionario,
-    atualizarFuncionario
+  listarFuncionarios,
+  criarFuncionario,
+  atualizarFuncionario,
+  deletarFuncionario,
+  getKPIsDashboard,
+  buscarAcessosRecentes
 };
