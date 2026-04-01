@@ -9,7 +9,7 @@
    ===================================================== */
 
 .equip-hidden {
-  display: none;
+  display: none !important;
 }
 
 .form-required {
@@ -293,13 +293,93 @@
 
 
 /* =====================================================
-   MODAL — TIPO DE EQUIPAMENTO
+   MODAL — OVERLAY + ESTRUTURA COMPLETA
    ===================================================== */
 
-.equip-modal {
-  max-width: 680px;
-  width: 100%;
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
 }
+
+.equip-modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  width: 100%;
+  max-width: 680px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.equip-modal .modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.equip-modal .modal-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.equip-modal .modal-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition), color var(--transition);
+}
+
+.equip-modal .modal-close:hover {
+  background: var(--surface-2);
+  color: var(--text-primary);
+}
+
+.equip-modal .modal-body {
+  padding: 22px 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.equip-modal .modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+/* =====================================================
+   MODAL — TIPO DE EQUIPAMENTO
+   ===================================================== */
 
 .equip-tipo-grid {
   display: grid;
@@ -442,121 +522,89 @@
    TOGGLE VIEW
    ===================================================== */
 
-.func-view-btn{
-
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-
-  gap:6px;
-
-  padding:8px 12px;
-
-  font-size:12px;
-  font-weight:600;
-
-  border-radius:var(--radius-sm);
-  border:1px solid var(--border);
-
-  background:var(--surface);
-
-  color:var(--text-muted);
-
-  cursor:pointer;
-
+.func-view-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
   transition:
-  background var(--transition),
-  border-color var(--transition),
-  color var(--transition);
-
+    background var(--transition),
+    border-color var(--transition),
+    color var(--transition);
 }
 
-.func-view-btn:hover{
-
-  background:var(--surface-2);
-  color:var(--text-primary);
-
+.func-view-btn:hover {
+  background: var(--surface-2);
+  color: var(--text-primary);
 }
 
-.func-view-btn.active{
-
-  background:var(--primary);
-  color:#fff;
-  border-color:var(--primary);
-
+.func-view-btn.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
 }
 
 /* ============================================================
-HEADER DA PÁGINA
-============================================================ */
+   HEADER DA PÁGINA
+   ============================================================ */
 
-.page-header{
-
-  display:flex;
-  align-items:flex-start;
-  justify-content:space-between;
-
-  gap:24px;
-
-  margin-bottom:28px;
-
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 28px;
 }
 
-.page-header .flex{
-
-  display:flex;
-  align-items:center;
-  gap:12px;
-
+.page-header .flex {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-.page-title{
-  margin:0;
+.page-title {
+  margin: 0;
 }
 
-.page-header p{
-  margin-top:6px;
+.page-header p {
+  margin-top: 6px;
 }
 
 /* ============================================================
-KPIs
-============================================================ */
+   KPIs
+   ============================================================ */
 
-.kpi-grid{
-
-  display:grid;
-
-  gap:20px;
-
-  margin-bottom:26px;
-
+.kpi-grid {
+  display: grid;
+  gap: 20px;
+  margin-bottom: 26px;
 }
 
 /* ============================================================
-FILTROS
-============================================================ */
+   FILTROS
+   ============================================================ */
 
-.func-filtros{
-
-  display:flex;
-
-  flex-wrap:wrap;
-
-  gap:14px;
-
+.func-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
 }
 
-.func-busca{
-
-  flex:1;
-  min-width:260px;
-
+.func-busca {
+  flex: 1;
+  min-width: 260px;
 }
 
-.func-select{
-
-  width:200px;
-
+.func-select {
+  width: 200px;
 }
 
 /* =====================================================

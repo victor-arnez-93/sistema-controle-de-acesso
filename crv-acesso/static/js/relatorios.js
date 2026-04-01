@@ -1,83 +1,270 @@
-/* =====================================================
-   CRV CONTROLE DE ACESSO
-   TELA: RELATÓRIOS
-   ===================================================== */
+/* ============================================================
+   CRV CONTROLE DE ACESSO — relatorios.js
+   ============================================================ */
+
+console.log('🚀 RELATORIOS iniciado');
 
 document.addEventListener('DOMContentLoaded', () => {
   initTipos();
   initPeriodo();
   initAcoes();
+  carregarKPIs();
+  carregarHistorico();
 });
 
 
-/* =====================================================
-   TIPOS DE RELATÓRIO
-   ===================================================== */
+/* ============================================================
+   ESTADO GLOBAL
+   ============================================================ */
+
+let tipoAtivo   = 'acesso';
+let dadosPrevia = [];
+
+
+/* ============================================================
+   CONFIGURAÇÃO DOS TIPOS
+   ============================================================ */
 
 const TIPOS_CONFIG = {
+
   acesso: {
     label:   'Controle de Acesso',
-    colunas: ['Funcionário', 'Matrícula', 'Catraca', 'Sentido', 'Método', 'Horário', 'Status'],
-    extras:  [
-      { id: 'rel-catraca', label: 'Catraca', tipo: 'select',
-        opcoes: ['Todas', 'Portão Principal — Entrada', 'Portão Principal — Saída',
-                 'Portão Lateral A', 'Portão Lateral B'] },
-      { id: 'rel-status-acesso', label: 'Status', tipo: 'select',
-        opcoes: ['Todos', 'Liberado', 'Negado'] },
+    tabela:  'acessos',
+    campoData: 'data',
+    colunas: ['Funcionário', 'Equipamento', 'Tipo', 'Sentido', 'Método', 'Data/Hora', 'Resultado'],
+    campos:  (row) => [
+      row.funcionario_id  || '—',
+      row.equipamento_id  || '—',
+      row.tipo            || '—',
+      row.sentido         || '—',
+      row.metodo          || '—',
+      row.data ? new Date(row.data).toLocaleString('pt-BR') : '—',
+      row.resultado       || '—',
     ],
+    extras: [
+      { id: 'rel-resultado-acesso', label: 'Resultado', tipo: 'select',
+        opcoes: ['Todos', 'liberado', 'negado'] },
+    ],
+    filtrar: (row) => {
+      const resultado = document.getElementById('rel-resultado-acesso')?.value;
+      if (resultado && resultado !== 'Todos' && row.resultado !== resultado) return false;
+      return true;
+    },
   },
+
   presenca: {
     label:   'Presença de Funcionários',
-    colunas: ['Funcionário', 'Setor', 'Turno', 'Entrada', 'Saída', 'Horas', 'Situação'],
-    extras:  [
-      { id: 'rel-turno', label: 'Turno', tipo: 'select',
-        opcoes: ['Todos', 'Manhã', 'Tarde', 'Noite', 'Integral'] },
-      { id: 'rel-situacao', label: 'Situação', tipo: 'select',
-        opcoes: ['Todas', 'Presente', 'Ausente', 'Atrasado', 'Saída antecipada'] },
+    tabela:  'acessos',
+    campoData: 'data',
+    colunas: ['Funcionário', 'Equipamento', 'Tipo', 'Data/Hora', 'Resultado'],
+    campos:  (row) => [
+      row.funcionario_id  || '—',
+      row.equipamento_id  || '—',
+      row.tipo            || '—',
+      row.data ? new Date(row.data).toLocaleString('pt-BR') : '—',
+      row.resultado       || '—',
     ],
+    extras: [
+      { id: 'rel-resultado-pres', label: 'Resultado', tipo: 'select',
+        opcoes: ['Todos', 'liberado', 'negado'] },
+    ],
+    filtrar: (row) => {
+      const resultado = document.getElementById('rel-resultado-pres')?.value;
+      if (resultado && resultado !== 'Todos' && row.resultado !== resultado) return false;
+      return true;
+    },
   },
+
   ocorrencias: {
     label:   'Ocorrências',
+    tabela:  'ocorrencias',
+    campoData: 'created_at',
     colunas: ['Tipo', 'Prioridade', 'Funcionário', 'Local', 'Data/Hora', 'Responsável', 'Status'],
-    extras:  [
+    campos:  (row) => [
+      row.tipo            || '—',
+      row.prioridade      || '—',
+      row.funcionario     || row.funcionario_id || '—',
+      row.local           || '—',
+      row.data
+        ? new Date(row.data).toLocaleString('pt-BR')
+        : row.created_at
+          ? new Date(row.created_at).toLocaleString('pt-BR')
+          : '—',
+      row.responsavel     || '—',
+      row.status          || '—',
+    ],
+    extras: [
       { id: 'rel-prioridade', label: 'Prioridade', tipo: 'select',
         opcoes: ['Todas', 'Crítica', 'Alta', 'Normal', 'Baixa'] },
       { id: 'rel-status-ocorr', label: 'Status', tipo: 'select',
-        opcoes: ['Todos', 'Aberta', 'Em análise', 'Resolvida', 'Fechada'] },
+        opcoes: ['Todos', 'aberta', 'analise', 'resolvida', 'fechada'] },
     ],
+    filtrar: (row) => {
+      const prio   = document.getElementById('rel-prioridade')?.value;
+      const status = document.getElementById('rel-status-ocorr')?.value;
+      if (prio   && prio   !== 'Todas' && row.prioridade !== prio)   return false;
+      if (status && status !== 'Todos' && row.status     !== status) return false;
+      return true;
+    },
   },
+
   equipamentos: {
     label:   'Equipamentos',
-    colunas: ['Nome', 'Tipo', 'Localização', 'IP', 'Uptime', 'Último contato', 'Status'],
-    extras:  [
-      { id: 'rel-tipo-equip', label: 'Tipo', tipo: 'select',
-        opcoes: ['Todos', 'Catraca', 'Leitor Facial', 'Leitor Biométrico', 'Controlador'] },
-      { id: 'rel-status-equip', label: 'Status', tipo: 'select',
-        opcoes: ['Todos', 'Online', 'Offline', 'Alerta', 'Manutenção'] },
+    tabela:  'equipamentos',
+    campoData: 'created_at',
+    colunas: ['Nome', 'Tipo', 'Localização', 'IP', 'Último contato', 'Status'],
+    campos:  (row) => [
+      row.nome            || '—',
+      row.tipo            || '—',
+      row.localizacao     || '—',
+      row.ip              || '—',
+      row.ultimo_contato
+        ? new Date(row.ultimo_contato).toLocaleString('pt-BR')
+        : '—',
+      row.status          || '—',
     ],
+    extras: [
+      { id: 'rel-tipo-equip', label: 'Tipo', tipo: 'select',
+        opcoes: ['Todos', 'catraca', 'leitor_facial', 'leitor_biometrico', 'controlador'] },
+      { id: 'rel-status-equip', label: 'Status', tipo: 'select',
+        opcoes: ['Todos', 'online', 'offline', 'alerta', 'manutencao'] },
+    ],
+    filtrar: (row) => {
+      const tipo   = document.getElementById('rel-tipo-equip')?.value;
+      const status = document.getElementById('rel-status-equip')?.value;
+      if (tipo   && tipo   !== 'Todos' && row.tipo   !== tipo)   return false;
+      if (status && status !== 'Todos' && row.status !== status) return false;
+      return true;
+    },
   },
+
   visitantes: {
     label:   'Visitantes',
-    colunas: ['Nome', 'Documento', 'Destino', 'Responsável', 'Entrada', 'Saída', 'Status'],
-    extras:  [
-      { id: 'rel-destino', label: 'Destino', tipo: 'text',
-        placeholder: 'Todos os setores' },
+    tabela:  'acessos',
+    campoData: 'data',
+    colunas: ['Funcionário', 'Equipamento', 'Tipo', 'Data/Hora', 'Resultado'],
+    campos:  (row) => [
+      row.funcionario_id  || '—',
+      row.equipamento_id  || '—',
+      row.tipo            || '—',
+      row.data ? new Date(row.data).toLocaleString('pt-BR') : '—',
+      row.resultado       || '—',
     ],
+    extras: [],
+    filtrar: () => true,
   },
+
   auditoria: {
     label:   'Auditoria do Sistema',
-    colunas: ['Usuário', 'Ação', 'Módulo', 'Descrição', 'IP', 'Data/Hora'],
-    extras:  [
-      { id: 'rel-modulo', label: 'Módulo', tipo: 'select',
-        opcoes: ['Todos', 'Funcionários', 'Regras de Acesso', 'Equipamentos',
-                 'Ocorrências', 'Relatórios', 'Configurações'] },
-      { id: 'rel-acao-audit', label: 'Ação', tipo: 'select',
-        opcoes: ['Todas', 'Criar', 'Editar', 'Excluir', 'Login', 'Logout'] },
+    tabela:  'auditoria',
+    campoData: 'data',
+    colunas: ['Usuário', 'Ação', 'Tabela', 'Registro ID', 'Data/Hora'],
+    campos:  (row) => [
+      row.usuario_id      || '—',
+      row.acao            || '—',
+      row.tabela          || row.modulo || '—',
+      row.registro_id     || '—',
+      row.data ? new Date(row.data).toLocaleString('pt-BR') : '—',
     ],
+    extras: [
+      { id: 'rel-tabela-audit', label: 'Tabela', tipo: 'select',
+        opcoes: ['Todas', 'funcionarios', 'credenciais', 'equipamentos',
+                 'ocorrencias', 'regras_acesso', 'acessos'] },
+      { id: 'rel-acao-audit', label: 'Ação', tipo: 'select',
+        opcoes: ['Todas', 'criar', 'editar', 'excluir', 'login', 'logout'] },
+    ],
+    filtrar: (row) => {
+      const tabela = document.getElementById('rel-tabela-audit')?.value;
+      const acao   = document.getElementById('rel-acao-audit')?.value;
+      if (tabela && tabela !== 'Todas' && row.tabela !== tabela) return false;
+      if (acao   && acao   !== 'Todas' && row.acao   !== acao)   return false;
+      return true;
+    },
   },
+
 };
 
-let tipoAtivo = 'acesso';
+
+/* ============================================================
+   KPIs
+   ============================================================ */
+
+async function carregarKPIs() {
+  const sb = window.getSupabase();
+  if (!sb) return;
+
+  try {
+    const mesIni = new Date();
+    mesIni.setDate(1);
+    const mesIniStr = mesIni.toISOString().split('T')[0];
+
+    const [resAcessos, resOcorr] = await Promise.all([
+      sb.from('acessos')
+        .select('*', { count: 'exact', head: true })
+        .gte('data', mesIniStr + 'T00:00:00'),
+      sb.from('ocorrencias')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', mesIniStr + 'T00:00:00'),
+    ]);
+
+    const vals = document.querySelectorAll('.kpi-value');
+    if (vals[0]) vals[0].textContent = '0';
+    if (vals[1]) vals[1].textContent = '0';
+    if (vals[2]) vals[2].textContent = resAcessos.count ?? 0;
+    if (vals[3]) vals[3].textContent = resOcorr.count   ?? 0;
+
+  } catch (err) {
+    console.error('Erro KPIs:', err);
+  }
+}
+
+
+/* ============================================================
+   HISTÓRICO DE RELATÓRIOS
+   ============================================================ */
+
+async function carregarHistorico() {
+  const sb = window.getSupabase();
+  if (!sb) return;
+
+  try {
+    const { data, error } = await sb
+      .from('auditoria')
+      .select('*')
+      .eq('acao', 'gerar')
+      .order('data', { ascending: false })
+      .limit(20);
+
+    if (error) {
+      console.warn('Histórico indisponível:', error.message);
+      return;
+    }
+
+    if (!data || data.length === 0) return;
+
+    mostrarHistorico();
+
+    data.forEach(row => {
+      renderLinhaHistorico({
+        id:        row.id,
+        tipo:      row.descricao || 'Relatório',
+        periodo:   row.extra?.periodo  || '—',
+        formato:   row.extra?.formato  || 'csv',
+        geradoEm:  row.data ? new Date(row.data).toLocaleString('pt-BR') : '—',
+        geradoPor: row.usuario_id      || '—',
+        tamanho:   row.extra?.tamanho  || '—',
+      });
+    });
+
+  } catch (err) {
+    console.error('Erro histórico:', err);
+  }
+}
+
+
+/* ============================================================
+   TIPOS — INIT
+   ============================================================ */
 
 function initTipos() {
   document.querySelectorAll('.rel-tipo-item').forEach(item => {
@@ -89,19 +276,14 @@ function initTipos() {
       const config = TIPOS_CONFIG[tipoAtivo];
       if (!config) return;
 
-      // Atualiza badge
       const badge = document.getElementById('rel-tipo-badge');
       if (badge) badge.textContent = config.label;
 
-      // Atualiza campos extras
       renderCamposExtras(config.extras);
-
-      // Limpa prévia
       ocultarPrevia();
     });
   });
 
-  // Renderiza extras do tipo inicial
   renderCamposExtras(TIPOS_CONFIG[tipoAtivo].extras);
 }
 
@@ -114,7 +296,6 @@ function renderCamposExtras(extras) {
     return;
   }
 
-  // Agrupa de 2 em 2 para manter grid
   const rows = [];
   for (let i = 0; i < extras.length; i += 2) {
     rows.push(extras.slice(i, i + 2));
@@ -127,7 +308,7 @@ function renderCamposExtras(extras) {
           <label class="form-label">${campo.label}</label>
           ${campo.tipo === 'select'
             ? `<select class="form-control" id="${campo.id}">
-                ${campo.opcoes.map(op => `<option>${op}</option>`).join('')}
+                ${campo.opcoes.map(op => `<option value="${op}">${op}</option>`).join('')}
                </select>`
             : `<input type="text" class="form-control" id="${campo.id}"
                  placeholder="${campo.placeholder || ''}">`
@@ -139,9 +320,9 @@ function renderCamposExtras(extras) {
 }
 
 
-/* =====================================================
-   PERÍODO PERSONALIZADO
-   ===================================================== */
+/* ============================================================
+   PERÍODO
+   ============================================================ */
 
 function initPeriodo() {
   const select = document.getElementById('rel-periodo');
@@ -156,7 +337,6 @@ function initPeriodo() {
     }
   });
 
-  // Preenche datas padrão
   const hoje = new Date().toISOString().split('T')[0];
   const dataIni = document.getElementById('rel-data-ini');
   const dataFim = document.getElementById('rel-data-fim');
@@ -165,9 +345,9 @@ function initPeriodo() {
 }
 
 
-/* =====================================================
-   AÇÕES — GERAR / PRÉ-VISUALIZAR / AGENDAR
-   ===================================================== */
+/* ============================================================
+   AÇÕES
+   ============================================================ */
 
 function initAcoes() {
   document.getElementById('btn-rel-previa')?.addEventListener('click', gerarPrevia);
@@ -195,9 +375,9 @@ function coletarFiltros() {
     periodo,
     dataIni,
     dataFim,
-    setor:       document.getElementById('rel-setor')?.value || '',
+    setor:       document.getElementById('rel-setor')?.value             || '',
     funcionario: document.getElementById('rel-funcionario')?.value.trim() || '',
-    formato:     document.getElementById('rel-formato')?.value || 'pdf',
+    formato:     document.getElementById('rel-formato')?.value           || 'csv',
   };
 }
 
@@ -209,7 +389,8 @@ function calcularRange(periodo) {
     case 'hoje':
       return { inicio: fmt(hoje), fim: fmt(hoje) };
     case 'ontem': {
-      const d = new Date(hoje); d.setDate(d.getDate() - 1);
+      const d = new Date(hoje);
+      d.setDate(d.getDate() - 1);
       return { inicio: fmt(d), fim: fmt(d) };
     }
     case 'semana': {
@@ -231,7 +412,15 @@ function calcularRange(periodo) {
   }
 }
 
-function gerarPrevia() {
+
+/* ============================================================
+   PRÉ-VISUALIZAÇÃO
+   ============================================================ */
+
+async function gerarPrevia() {
+  const sb = window.getSupabase();
+  if (!sb) { alert('Banco de dados não conectado.'); return; }
+
   const filtros = coletarFiltros();
   const config  = TIPOS_CONFIG[tipoAtivo];
   if (!config) return;
@@ -239,96 +428,225 @@ function gerarPrevia() {
   const btn = document.getElementById('btn-rel-previa');
   if (btn) {
     btn.disabled = true;
-    btn.innerHTML = '<i class="ph ph-spinner"></i> Gerando...';
+    btn.innerHTML = '<i class="ph ph-spinner" style="animation:rel-spin .8s linear infinite"></i> Gerando...';
   }
 
-  // TODO: chamar backend /api/relatorios/previa com filtros
-  setTimeout(() => {
+  try {
+    const campoData = config.campoData;
+
+    const { data, error } = await sb
+      .from(config.tabela)
+      .select('*')
+      .gte(campoData, filtros.dataIni + 'T00:00:00')
+      .lte(campoData, filtros.dataFim + 'T23:59:59')
+      .order(campoData, { ascending: false })
+      .limit(10);
+
+    if (error) {
+      console.error('Erro na prévia:', error);
+      alert('Erro ao buscar dados: ' + error.message);
+      return;
+    }
+
+    dadosPrevia = (data || []).filter(row => config.filtrar(row));
+    mostrarPrevia(filtros, config, dadosPrevia);
+
+  } catch (err) {
+    console.error(err);
+  } finally {
     if (btn) {
       btn.disabled = false;
       btn.innerHTML = '<i class="ph ph-eye"></i> Pré-visualizar';
     }
-
-    // Exibe prévia vazia (backend preencherá via renderLinhaPrevia)
-    mostrarPrevia(filtros, config);
-    console.log('Prévia solicitada:', filtros);
-  }, 800);
+  }
 }
 
-function mostrarPrevia(filtros, config) {
+function mostrarPrevia(filtros, config, dados) {
   document.getElementById('rel-previa-empty')?.classList.add('rel-hidden');
   document.getElementById('rel-previa-content')?.classList.remove('rel-hidden');
 
-  // Meta
   const meta = document.getElementById('rel-previa-meta');
   if (meta) {
     meta.innerHTML = `
       <span><strong>${config.label}</strong></span>
       <span>${filtros.dataIni} → ${filtros.dataFim}</span>
-      <span>Setor: ${filtros.setor || 'Todos'}</span>
+      ${filtros.setor ? `<span>Setor: ${filtros.setor}</span>` : ''}
       <span>Gerado em: ${new Date().toLocaleString('pt-BR')}</span>
     `;
   }
 
-  // Cabeçalho da tabela
   const thead = document.getElementById('rel-previa-thead');
   if (thead) {
     thead.innerHTML = `<tr>${config.colunas.map(c => `<th>${c}</th>`).join('')}</tr>`;
   }
 
-  // Limpa body (backend vai preencher)
   const tbody = document.getElementById('rel-previa-tbody');
-  if (tbody) tbody.innerHTML = '';
+  if (tbody) {
+    tbody.innerHTML = '';
+    if (!dados || dados.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="${config.colunas.length}"
+            style="text-align:center;color:var(--text-muted);padding:24px;font-size:0.83rem;">
+            <i class="ph ph-magnifying-glass"
+              style="font-size:1.2rem;opacity:.4;display:block;margin:0 auto 8px;"></i>
+            Nenhum registro encontrado para os filtros selecionados
+          </td>
+        </tr>`;
+    } else {
+      dados.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = config.campos(row)
+          .map(c => `<td class="text-sm">${c}</td>`)
+          .join('');
+        tbody.appendChild(tr);
+      });
+    }
+  }
 
   const info = document.getElementById('rel-previa-info');
   if (info) info.textContent = `${config.label} · ${filtros.dataIni} a ${filtros.dataFim}`;
 
   const total = document.getElementById('rel-previa-total');
-  if (total) total.innerHTML = '<strong>0</strong> registros encontrados';
+  if (total) {
+    const qtd = dados?.length || 0;
+    total.innerHTML = `<strong>${qtd}</strong> registro${qtd !== 1 ? 's' : ''} encontrado${qtd !== 1 ? 's' : ''}`;
+  }
 }
 
 function ocultarPrevia() {
   document.getElementById('rel-previa-empty')?.classList.remove('rel-hidden');
   document.getElementById('rel-previa-content')?.classList.add('rel-hidden');
-
   const info = document.getElementById('rel-previa-info');
   if (info) info.textContent = 'Configure e clique em pré-visualizar';
 }
 
-function gerarRelatorio() {
+
+/* ============================================================
+   GERAR RELATÓRIO — EXPORT CSV
+   ============================================================ */
+
+async function gerarRelatorio() {
+  const sb = window.getSupabase();
+  if (!sb) { alert('Banco de dados não conectado.'); return; }
+
   const filtros = coletarFiltros();
+  const config  = TIPOS_CONFIG[tipoAtivo];
+  if (!config) return;
 
   const btn = document.getElementById('btn-rel-gerar');
   if (btn) {
     btn.disabled = true;
-    btn.innerHTML = '<i class="ph ph-spinner"></i> Gerando...';
+    btn.innerHTML = '<i class="ph ph-spinner" style="animation:rel-spin .8s linear infinite"></i> Gerando...';
   }
 
-  // TODO: chamar backend /api/relatorios/gerar e fazer download
-  setTimeout(() => {
+  try {
+    const campoData = config.campoData;
+
+    const { data, error } = await sb
+      .from(config.tabela)
+      .select('*')
+      .gte(campoData, filtros.dataIni + 'T00:00:00')
+      .lte(campoData, filtros.dataFim + 'T23:59:59')
+      .order(campoData, { ascending: false });
+
+    if (error) {
+      alert('Erro ao buscar dados: ' + error.message);
+      return;
+    }
+
+    const dados = (data || []).filter(row => config.filtrar(row));
+
+    if (!dados.length) {
+      alert('Nenhum registro encontrado para os filtros selecionados.');
+      return;
+    }
+
+    exportarCSV(
+      config.label,
+      config.colunas,
+      dados.map(row => config.campos(row)),
+      filtros
+    );
+
+    await registrarAuditoria(filtros, dados.length);
+    await carregarHistorico();
+
+  } catch (err) {
+    console.error(err);
+    alert('Erro inesperado ao gerar relatório.');
+  } finally {
     if (btn) {
       btn.disabled = false;
       btn.innerHTML = '<i class="ph ph-file-arrow-down"></i> Gerar e baixar';
     }
-    console.log('Gerar relatório:', filtros);
-  }, 1200);
+  }
 }
+
+function exportarCSV(nomeRelatorio, colunas, linhas, filtros) {
+  const BOM    = '\uFEFF';
+  const sep    = ';';
+  const titulo = `${nomeRelatorio} — ${filtros.dataIni} a ${filtros.dataFim}`;
+
+  const linhasCSV = [
+    titulo,
+    `Gerado em: ${new Date().toLocaleString('pt-BR')}`,
+    '',
+    colunas.join(sep),
+    ...linhas.map(l =>
+      l.map(c => `"${String(c).replace(/"/g, '""')}"`).join(sep)
+    ),
+  ];
+
+  const blob     = new Blob([BOM + linhasCSV.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+  const url      = URL.createObjectURL(blob);
+  const a        = document.createElement('a');
+  a.href         = url;
+  a.download     = `CRV_${nomeRelatorio.replace(/\s/g, '_')}_${filtros.dataIni}_${filtros.dataFim}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  console.log('✅ CSV exportado:', a.download);
+}
+
+async function registrarAuditoria(filtros, totalRegistros) {
+  const sb = window.getSupabase();
+  if (!sb) return;
+
+  try {
+    await sb.from('auditoria').insert([{
+      acao:        'gerar',
+      data:        new Date().toISOString(),
+      tabela:      TIPOS_CONFIG[filtros.tipo]?.tabela || filtros.tipo,
+      descricao:   `Relatório de ${TIPOS_CONFIG[filtros.tipo]?.label || filtros.tipo} gerado`,
+      extra: {
+        periodo:         filtros.dataIni + ' a ' + filtros.dataFim,
+        formato:         filtros.formato,
+        total_registros: totalRegistros,
+        tamanho:         totalRegistros + ' registros',
+      },
+    }]);
+  } catch (err) {
+    console.warn('Auditoria não registrada:', err);
+  }
+}
+
+
+/* ============================================================
+   AGENDAMENTO
+   ============================================================ */
 
 function abrirAgendamento() {
-  // TODO: abrir modal de agendamento de relatório automático
-  console.log('Agendar relatório');
+  alert('Agendamento de relatórios automáticos estará disponível em breve.');
 }
 
 
-/* =====================================================
-   HELPERS EXPORTADOS
-   (usados pelo backend ao injetar dados)
-   ===================================================== */
+/* ============================================================
+   HELPERS
+   ============================================================ */
 
-/**
- * Adiciona uma linha na tabela de prévia.
- * @param {Array} celulas — array de strings com os valores
- */
 function renderLinhaPrevia(celulas) {
   const tbody = document.getElementById('rel-previa-tbody');
   if (!tbody) return;
@@ -337,7 +655,6 @@ function renderLinhaPrevia(celulas) {
   tr.innerHTML = celulas.map(c => `<td class="text-sm">${c}</td>`).join('');
   tbody.appendChild(tr);
 
-  // Atualiza contador
   const total = document.getElementById('rel-previa-total');
   if (total) {
     const qtd = tbody.querySelectorAll('tr').length;
@@ -345,18 +662,14 @@ function renderLinhaPrevia(celulas) {
   }
 }
 
-/**
- * Adiciona uma linha no histórico de relatórios.
- * @param {Object} rel
- */
 function renderLinhaHistorico(rel) {
   const tbody = document.getElementById('rel-historico-tbody');
   if (!tbody) return;
 
   const formatos = {
-    pdf:  '<span class="rel-formato-badge pdf"><i class="ph ph-file-pdf"></i>PDF</span>',
-    xlsx: '<span class="rel-formato-badge xlsx"><i class="ph ph-file-xls"></i>XLSX</span>',
-    csv:  '<span class="rel-formato-badge csv"><i class="ph ph-file-csv"></i>CSV</span>',
+    pdf:  '<span class="rel-formato-badge pdf"><i class="ph ph-file-pdf"></i> PDF</span>',
+    xlsx: '<span class="rel-formato-badge xlsx"><i class="ph ph-file-xls"></i> XLSX</span>',
+    csv:  '<span class="rel-formato-badge csv"><i class="ph ph-file-csv"></i> CSV</span>',
   };
 
   const tr = document.createElement('tr');
@@ -383,20 +696,36 @@ function renderLinhaHistorico(rel) {
   tbody.appendChild(tr);
 }
 
-/**
- * Exibe a tabela de histórico e oculta o estado vazio.
- */
 function mostrarHistorico() {
   document.getElementById('rel-historico-empty')?.classList.add('rel-hidden');
   document.getElementById('rel-historico-wrap')?.classList.remove('rel-hidden');
 }
 
 function baixarRelatorio(id) {
-  // TODO: chamar endpoint de download
+  alert('Redownload disponível apenas para arquivos ainda em cache. Gere novamente se necessário.');
   console.log('Baixar relatório:', id);
 }
 
-function excluirHistorico(id) {
-  // TODO: confirmar e chamar backend
-  console.log('Excluir histórico:', id);
+async function excluirHistorico(id) {
+  if (!confirm('Remover este registro do histórico?')) return;
+
+  const sb = window.getSupabase();
+  if (!sb) return;
+
+  const { error } = await sb
+    .from('auditoria')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    alert('Erro ao excluir: ' + error.message);
+    return;
+  }
+
+  const tbody = document.getElementById('rel-historico-tbody');
+  if (tbody) {
+    tbody.querySelectorAll('tr').forEach(tr => {
+      if (tr.innerHTML.includes(id)) tr.remove();
+    });
+  }
 }

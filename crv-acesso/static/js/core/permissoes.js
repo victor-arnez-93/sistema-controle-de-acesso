@@ -76,8 +76,6 @@ function protegerPagina(perfilNecessario){
 
 }
 
-}
-
 /* ==========================================================
    BLOQUEAR ELEMENTOS SEM PERMISSÃO
    ========================================================== */

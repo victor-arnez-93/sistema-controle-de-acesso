@@ -1,7 +1,8 @@
-/* =====================================================
-   CRV CONTROLE DE ACESSO
-   TELA: OCORRÊNCIAS
-   ===================================================== */
+/* ============================================================
+   CRV CONTROLE DE ACESSO — ocorrencias.js
+   ============================================================ */
+
+console.log('🚀 OCORRENCIAS iniciado');
 
 document.addEventListener('DOMContentLoaded', () => {
   initTabs();
@@ -9,28 +10,123 @@ document.addEventListener('DOMContentLoaded', () => {
   initModalDetalhe();
   initFiltros();
   preencherDataAtual();
+  carregarOcorrencias();
 });
 
 
-/* =====================================================
+/* ============================================================
+   ESTADO GLOBAL
+   ============================================================ */
+
+let ocorrenciasLista = [];
+let ocorrenciaEditando = null;
+
+
+/* ============================================================
    ABAS
-   ===================================================== */
+   ============================================================ */
 
 function initTabs() {
   document.querySelectorAll('.ocorr-tab').forEach(tab => {
     tab.addEventListener('click', () => {
       document.querySelectorAll('.ocorr-tab').forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
-      // TODO: filtrar lista por status via backend
-      console.log('Filtrar por:', tab.dataset.tab);
+      filtrarPorAba(tab.dataset.tab);
     });
   });
 }
 
+function filtrarPorAba(aba) {
+  let filtrada = ocorrenciasLista;
 
-/* =====================================================
+  if (aba === 'abertas')   filtrada = ocorrenciasLista.filter(o => o.status === 'aberta');
+  if (aba === 'analise')   filtrada = ocorrenciasLista.filter(o => o.status === 'analise');
+  if (aba === 'resolvidas') filtrada = ocorrenciasLista.filter(o => o.status === 'resolvida');
+
+  renderizarOcorrencias(filtrada);
+}
+
+
+/* ============================================================
+   CARREGAR OCORRÊNCIAS
+   ============================================================ */
+
+async function carregarOcorrencias() {
+  const sb = window.getSupabase();
+  if (!sb) return;
+
+  try {
+    console.log('📡 Buscando ocorrências...');
+
+    const { data, error } = await sb
+      .from('ocorrencias')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Erro ao carregar ocorrências:', error);
+      return;
+    }
+
+    ocorrenciasLista = data || [];
+
+    console.log('✅ Ocorrências carregadas:', ocorrenciasLista.length);
+
+    atualizarKPIsOcorr(ocorrenciasLista);
+    renderizarOcorrencias(ocorrenciasLista);
+
+  } catch (err) {
+    console.error('Erro inesperado:', err);
+  }
+}
+
+
+/* ============================================================
+   KPIs
+   ============================================================ */
+
+function atualizarKPIsOcorr(lista) {
+  const hoje = new Date().toISOString().split('T')[0];
+
+  const vals = document.querySelectorAll('.kpi-value');
+  if (vals[0]) vals[0].textContent = lista.filter(o => o.status === 'aberta').length;
+  if (vals[1]) vals[1].textContent = lista.filter(o => o.status === 'analise').length;
+  if (vals[2]) vals[2].textContent = lista.filter(o => o.status === 'resolvida' && o.updated_at?.startsWith(hoje)).length;
+  if (vals[3]) vals[3].textContent = lista.filter(o => o.prioridade === 'Crítica').length;
+}
+
+
+/* ============================================================
+   RENDERIZAR LISTA
+   ============================================================ */
+
+function renderizarOcorrencias(lista) {
+  const listEl = document.getElementById('ocorr-list');
+  const empty  = document.getElementById('ocorr-empty');
+  const label  = document.getElementById('ocorr-total-label');
+
+  if (!listEl) return;
+
+  listEl.innerHTML = '';
+
+  if (!lista || lista.length === 0) {
+    empty?.classList.remove('ocorr-hidden');
+    listEl.classList.add('ocorr-hidden');
+    if (label) label.textContent = '0 ocorrências';
+    return;
+  }
+
+  empty?.classList.add('ocorr-hidden');
+  listEl.classList.remove('ocorr-hidden');
+  if (label) label.textContent = `${lista.length} ocorrências`;
+
+  lista.forEach(o => renderItemOcorr(o));
+}
+
+
+/* ============================================================
    MODAL — NOVA OCORRÊNCIA
-   ===================================================== */
+   ============================================================ */
 
 function initModalOcorr() {
   const overlay   = document.getElementById('modal-ocorr');
@@ -41,9 +137,12 @@ function initModalOcorr() {
   const btnSalvar = document.getElementById('btn-ocorr-salvar');
 
   const abrir = () => {
+    ocorrenciaEditando = null;
     limparModalOcorr();
     overlay.classList.remove('ocorr-hidden');
     document.body.style.overflow = 'hidden';
+    const titulo = document.getElementById('modal-ocorr-titulo');
+    if (titulo) titulo.innerHTML = '<i class="ph ph-warning-circle"></i> Nova Ocorrência';
   };
 
   const fechar = () => {
@@ -56,16 +155,54 @@ function initModalOcorr() {
   if (btnFechar) btnFechar.addEventListener('click', fechar);
   if (btnCancel) btnCancel.addEventListener('click', fechar);
 
-  overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) fechar();
-  });
+  if (overlay) {
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) fechar();
+    });
+  }
 
-  btnSalvar.addEventListener('click', () => {
-    if (!validarModalOcorr()) return;
-    // TODO: enviar ao backend via fetch
-    console.log('Salvar ocorrência:', coletarDadosOcorr());
-    fechar();
-  });
+  if (btnSalvar) {
+    btnSalvar.addEventListener('click', async () => {
+      if (!validarModalOcorr()) return;
+
+      const sb = window.getSupabase();
+      if (!sb) {
+        alert('Banco de dados não conectado.');
+        return;
+      }
+
+      const dados = coletarDadosOcorr();
+
+      try {
+        let response;
+
+        if (ocorrenciaEditando) {
+          response = await sb
+            .from('ocorrencias')
+            .update(dados)
+            .eq('id', ocorrenciaEditando);
+        } else {
+          response = await sb
+            .from('ocorrencias')
+            .insert([dados]);
+        }
+
+        if (response.error) {
+          console.error(response.error);
+          alert('Erro ao salvar: ' + response.error.message);
+          return;
+        }
+
+        console.log('✅ Ocorrência salva');
+        fechar();
+        carregarOcorrencias();
+
+      } catch (err) {
+        console.error(err);
+        alert('Erro inesperado ao salvar.');
+      }
+    });
+  }
 }
 
 function limparModalOcorr() {
@@ -79,7 +216,6 @@ function limparModalOcorr() {
     if (el) el.selectedIndex = 0;
   });
 
-  // Preenche data/hora atual
   const dataEl = document.getElementById('o-data');
   if (dataEl) {
     const agora = new Date();
@@ -116,22 +252,22 @@ function validarModalOcorr() {
 
 function coletarDadosOcorr() {
   return {
-    tipo:         document.getElementById('o-tipo')?.value,
-    prioridade:   document.getElementById('o-prioridade')?.value,
-    funcionario:  document.getElementById('o-funcionario')?.value.trim(),
-    local:        document.getElementById('o-local')?.value.trim(),
-    descricao:    document.getElementById('o-descricao')?.value.trim(),
-    data:         document.getElementById('o-data')?.value,
-    status:       document.getElementById('o-status')?.value,
-    responsavel:  document.getElementById('o-responsavel')?.value.trim(),
-    obs:          document.getElementById('o-obs')?.value.trim(),
+    tipo:        document.getElementById('o-tipo')?.value,
+    prioridade:  document.getElementById('o-prioridade')?.value,
+    funcionario: document.getElementById('o-funcionario')?.value.trim() || null,
+    local:       document.getElementById('o-local')?.value.trim() || null,
+    descricao:   document.getElementById('o-descricao')?.value.trim(),
+    data:        document.getElementById('o-data')?.value || null,
+    status:      document.getElementById('o-status')?.value || 'aberta',
+    responsavel: document.getElementById('o-responsavel')?.value.trim() || null,
+    obs:         document.getElementById('o-obs')?.value.trim() || null,
   };
 }
 
 
-/* =====================================================
+/* ============================================================
    MODAL — DETALHE DA OCORRÊNCIA
-   ===================================================== */
+   ============================================================ */
 
 function initModalDetalhe() {
   const overlay    = document.getElementById('modal-ocorr-detalhe');
@@ -148,51 +284,76 @@ function initModalDetalhe() {
   if (btnFechar)  btnFechar.addEventListener('click', fechar);
   if (btnFechar2) btnFechar2.addEventListener('click', fechar);
 
-  overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) fechar();
-  });
+  if (overlay) {
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) fechar();
+    });
+  }
 
   if (btnEditar) {
     btnEditar.addEventListener('click', () => {
-      // TODO: abrir modal de edição com dados preenchidos
-      console.log('Editar ocorrência');
+      fechar();
+      if (ocorrenciaEditando) {
+        const ocorr = ocorrenciasLista.find(o => o.id === ocorrenciaEditando);
+        if (ocorr) abrirModalEdicao(ocorr);
+      }
     });
   }
 
   if (btnResolver) {
-    btnResolver.addEventListener('click', () => {
-      // TODO: chamar backend para resolver
-      console.log('Resolver ocorrência');
+    btnResolver.addEventListener('click', async () => {
+      if (!ocorrenciaEditando) return;
+
+      const sb = window.getSupabase();
+      if (!sb) return;
+
+      const { error } = await sb
+        .from('ocorrencias')
+        .update({ status: 'resolvida' })
+        .eq('id', ocorrenciaEditando);
+
+      if (error) {
+        alert('Erro ao resolver: ' + error.message);
+        return;
+      }
+
+      console.log('✅ Ocorrência resolvida');
       fechar();
+      carregarOcorrencias();
     });
   }
 }
 
-/**
- * Abre o modal de detalhe com os dados da ocorrência.
- * @param {Object} ocorr
- */
 function abrirDetalheOcorr(ocorr) {
+  ocorrenciaEditando = ocorr.id;
+
   const overlay = document.getElementById('modal-ocorr-detalhe');
   const body    = document.getElementById('modal-detalhe-body');
 
   const corPrioridade = {
-    'Crítica': 'danger',
-    'Alta':    'warning',
+    'Crítica': 'critica',
+    'Alta':    'alta',
     'Normal':  'normal',
     'Baixa':   'baixa',
   }[ocorr.prioridade] || 'normal';
 
   const icones = {
-    'Acesso negado':          'ph-x-circle',
-    'Uso indevido':           'ph-warning',
-    'Equipamento offline':    'ph-wifi-slash',
-    'Saída fora do horário':  'ph-clock',
-    'Tentativa suspeita':     'ph-shield-warning',
-    'Outro':                  'ph-warning-circle',
+    'Acesso negado':         'ph-x-circle',
+    'Uso indevido':          'ph-warning',
+    'Equipamento offline':   'ph-wifi-slash',
+    'Saída fora do horário': 'ph-clock',
+    'Tentativa suspeita':    'ph-shield-warning',
+    'Outro':                 'ph-warning-circle',
   };
 
   const icone = icones[ocorr.tipo] || 'ph-warning-circle';
+
+  const statusLabels = {
+    aberta:    'Aberta',
+    analise:   'Em análise',
+    resolvida: 'Resolvida',
+    fechada:   'Fechada',
+  };
 
   body.innerHTML = `
     <div class="ocorr-detalhe-header">
@@ -203,7 +364,7 @@ function abrirDetalheOcorr(ocorr) {
         <div class="ocorr-detalhe-titulo">${ocorr.tipo}</div>
         <div class="ocorr-detalhe-badges">
           <span class="ocorr-prioridade-badge ${corPrioridade}">${ocorr.prioridade}</span>
-          <span class="ocorr-status-badge ${ocorr.status}">${ocorr.statusLabel || ocorr.status}</span>
+          <span class="ocorr-status-badge ${ocorr.status}">${statusLabels[ocorr.status] || ocorr.status}</span>
         </div>
       </div>
     </div>
@@ -220,7 +381,7 @@ function abrirDetalheOcorr(ocorr) {
       </div>
       <div style="display:flex;gap:10px;font-size:0.83rem;">
         <span style="color:var(--text-muted);min-width:110px;">Data / Hora</span>
-        <span style="color:var(--text-primary);font-weight:500;">${ocorr.data || '—'}</span>
+        <span style="color:var(--text-primary);font-weight:500;">${ocorr.data ? new Date(ocorr.data).toLocaleString('pt-BR') : '—'}</span>
       </div>
       <div style="display:flex;gap:10px;font-size:0.83rem;">
         <span style="color:var(--text-muted);min-width:110px;">Responsável</span>
@@ -230,6 +391,11 @@ function abrirDetalheOcorr(ocorr) {
         <span style="color:var(--text-muted);min-width:110px;">Descrição</span>
         <span style="color:var(--text-secondary);line-height:1.6;">${ocorr.descricao || '—'}</span>
       </div>
+      ${ocorr.obs ? `
+      <div style="display:flex;gap:10px;font-size:0.83rem;">
+        <span style="color:var(--text-muted);min-width:110px;">Observações</span>
+        <span style="color:var(--text-secondary);line-height:1.6;">${ocorr.obs}</span>
+      </div>` : ''}
     </div>
 
     <div class="modal-section-title">Histórico</div>
@@ -267,56 +433,82 @@ function renderTimeline(eventos) {
 }
 
 
-/* =====================================================
-   FILTROS
-   ===================================================== */
+/* ============================================================
+   ABRIR MODAL EDIÇÃO
+   ============================================================ */
 
-function initFiltros() {
-  let debounce;
+function abrirModalEdicao(ocorr) {
+  ocorrenciaEditando = ocorr.id;
 
-  document.getElementById('busca-ocorr')?.addEventListener('input', function () {
-    clearTimeout(debounce);
-    debounce = setTimeout(() => {
-      // TODO: filtrar lista ou chamar API
-      console.log('Buscar ocorrência:', this.value);
-    }, 300);
+  const overlay = document.getElementById('modal-ocorr');
+  const titulo  = document.getElementById('modal-ocorr-titulo');
+
+  if (titulo) titulo.innerHTML = '<i class="ph ph-pencil-simple"></i> Editar Ocorrência';
+
+  const map = {
+    'o-tipo':        ocorr.tipo,
+    'o-prioridade':  ocorr.prioridade,
+    'o-funcionario': ocorr.funcionario,
+    'o-local':       ocorr.local,
+    'o-descricao':   ocorr.descricao,
+    'o-responsavel': ocorr.responsavel,
+    'o-obs':         ocorr.obs,
+    'o-status':      ocorr.status,
+  };
+
+  Object.entries(map).forEach(([id, val]) => {
+    const el = document.getElementById(id);
+    if (el) el.value = val || '';
   });
 
-  document.getElementById('filtro-tipo-ocorr')?.addEventListener('change', function () {
-    console.log('Filtro tipo:', this.value);
-  });
-
-  document.getElementById('filtro-prioridade-ocorr')?.addEventListener('change', function () {
-    console.log('Filtro prioridade:', this.value);
-  });
-
-  document.getElementById('filtro-data-ocorr')?.addEventListener('change', function () {
-    console.log('Filtro data:', this.value);
-  });
-}
-
-
-/* =====================================================
-   HELPERS — DATA ATUAL
-   ===================================================== */
-
-function preencherDataAtual() {
-  const dataEl = document.getElementById('filtro-data-ocorr');
-  if (dataEl) {
-    dataEl.value = new Date().toISOString().split('T')[0];
+  if (ocorr.data) {
+    const dataEl = document.getElementById('o-data');
+    if (dataEl) {
+      const d = new Date(ocorr.data);
+      d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+      dataEl.value = d.toISOString().slice(0, 16);
+    }
   }
+
+  overlay.classList.remove('ocorr-hidden');
+  document.body.style.overflow = 'hidden';
 }
 
 
-/* =====================================================
-   HELPERS EXPORTADOS
-   (usados pelo backend ao injetar dados)
-   ===================================================== */
+/* ============================================================
+   EDITAR / EXCLUIR
+   ============================================================ */
 
-/**
- * Renderiza um item na lista de ocorrências.
- * @param {Object} ocorr
- */
+function editarOcorr(id) {
+  const ocorr = ocorrenciasLista.find(o => o.id == id);
+  if (ocorr) abrirModalEdicao(ocorr);
+}
+
+async function excluirOcorr(id) {
+  if (!confirm('Excluir esta ocorrência?')) return;
+
+  const sb = window.getSupabase();
+  if (!sb) return;
+
+  const { error } = await sb
+    .from('ocorrencias')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    alert('Erro ao excluir: ' + error.message);
+    return;
+  }
+
+  console.log('✅ Ocorrência excluída');
+  carregarOcorrencias();
+}
+
+
+/* ============================================================
+   RENDERIZAR ITEM
+   ============================================================ */
+
 function renderItemOcorr(ocorr) {
   const lista = document.getElementById('ocorr-list');
   if (!lista) return;
@@ -346,6 +538,10 @@ function renderItemOcorr(ocorr) {
     fechada:   '<span class="ocorr-status-badge fechada">Fechada</span>',
   };
 
+  const hora = ocorr.data
+    ? new Date(ocorr.data).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' })
+    : '—';
+
   const item = document.createElement('div');
   item.className = `ocorr-item ${corPrioridade}`;
   item.innerHTML = `
@@ -366,7 +562,7 @@ function renderItemOcorr(ocorr) {
       </div>
     </div>
     <div class="ocorr-item-actions">
-      <div class="ocorr-item-hora">${ocorr.hora || '—'}</div>
+      <div class="ocorr-item-hora">${hora}</div>
       <div class="ocorr-item-btns">
         <button class="btn btn-ghost btn-sm btn-icon" title="Ver detalhes"
           onclick='abrirDetalheOcorr(${JSON.stringify(ocorr)})'>
@@ -387,20 +583,66 @@ function renderItemOcorr(ocorr) {
   lista.appendChild(item);
 }
 
-/**
- * Exibe a lista e oculta o estado vazio.
- */
+
+/* ============================================================
+   MOSTRAR LISTA
+   ============================================================ */
+
 function mostrarListaOcorr() {
   document.getElementById('ocorr-empty')?.classList.add('ocorr-hidden');
   document.getElementById('ocorr-list')?.classList.remove('ocorr-hidden');
 }
 
-function editarOcorr(id) {
-  // TODO: buscar dados do backend e abrir modal preenchido
-  console.log('Editar ocorrência:', id);
+
+/* ============================================================
+   FILTROS
+   ============================================================ */
+
+function initFiltros() {
+  let debounce;
+
+  const aplicar = () => {
+    const termo     = document.getElementById('busca-ocorr')?.value.toLowerCase() || '';
+    const tipo      = document.getElementById('filtro-tipo-ocorr')?.value || '';
+    const prioridade = document.getElementById('filtro-prioridade-ocorr')?.value || '';
+    const data      = document.getElementById('filtro-data-ocorr')?.value || '';
+
+    const filtrada = ocorrenciasLista.filter(o => {
+      const matchTermo =
+        !termo ||
+        o.tipo?.toLowerCase().includes(termo) ||
+        o.descricao?.toLowerCase().includes(termo) ||
+        o.funcionario?.toLowerCase().includes(termo) ||
+        o.local?.toLowerCase().includes(termo);
+
+      const matchTipo      = !tipo      || o.tipo === tipo;
+      const matchPrioridade = !prioridade || o.prioridade === prioridade;
+      const matchData      = !data      || o.data?.startsWith(data);
+
+      return matchTermo && matchTipo && matchPrioridade && matchData;
+    });
+
+    renderizarOcorrencias(filtrada);
+  };
+
+  document.getElementById('busca-ocorr')?.addEventListener('input', () => {
+    clearTimeout(debounce);
+    debounce = setTimeout(aplicar, 300);
+  });
+
+  document.getElementById('filtro-tipo-ocorr')?.addEventListener('change', aplicar);
+  document.getElementById('filtro-prioridade-ocorr')?.addEventListener('change', aplicar);
+  document.getElementById('filtro-data-ocorr')?.addEventListener('change', aplicar);
 }
 
-function excluirOcorr(id) {
-  // TODO: confirmar e chamar backend
-  console.log('Excluir ocorrência:', id);
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+
+function preencherDataAtual() {
+  const dataEl = document.getElementById('filtro-data-ocorr');
+  if (dataEl) {
+    dataEl.value = new Date().toISOString().split('T')[0];
+  }
 }
