@@ -17,61 +17,64 @@
 
   <main class="main-content">
 
-    <div class="page-header">
-      <div>
-        <h2 class="page-title">Equipamentos</h2>
-        <p class="text-sm text-muted mt-1">Gestão de catracas, leitores e dispositivos Control iD</p>
-      </div>
-      <div class="page-actions">
-        <button class="btn btn-ghost btn-sm">
-          <i class="ph ph-download-simple"></i> Exportar
-        </button>
-        <button class="btn btn-primary btn-sm" id="btn-novo-equip">
-          <i class="ph ph-plus"></i> Novo Equipamento
-        </button>
-      </div>
+<div class="page-header">
+  <div>
+    <h2 class="page-title">Equipamentos</h2>
+    <p class="text-sm text-muted mt-1">Gestão de catracas, leitores e dispositivos Control iD</p>
+    <p class="text-sm text-muted mt-1">
+      Monitore o status de conexão e gerencie todos os dispositivos de controle de acesso.
+    </p>
+  </div>
+  <div class="page-actions">
+    <button class="btn btn-ghost btn-sm">
+      <i class="ph ph-download-simple"></i> Exportar
+    </button>
+    <button class="btn btn-primary btn-sm" id="btn-novo-equip">
+      <i class="ph ph-plus"></i> Novo Equipamento
+    </button>
+  </div>
+</div>
+
+<!-- KPIs -->
+<div class="kpi-grid">
+
+  <div class="kpi-card" style="border-top:3px solid var(--primary);">
+    <div class="flex items-center justify-between">
+      <span class="kpi-label">Total</span>
+      <i class="ph ph-devices kpi-icon" style="color:var(--primary);"></i>
     </div>
+    <div class="kpi-value">—</div>
+    <div class="kpi-sub">equipamentos cadastrados</div>
+  </div>
 
-    <!-- KPIs -->
-    <div class="kpi-grid">
-
-      <div class="kpi-card">
-        <div class="flex items-center justify-between">
-          <span class="kpi-label">Total</span>
-          <i class="ph ph-devices kpi-icon" style="color:var(--primary);"></i>
-        </div>
-        <div class="kpi-value">—</div>
-        <div class="kpi-sub">equipamentos cadastrados</div>
-      </div>
-
-      <div class="kpi-card">
-        <div class="flex items-center justify-between">
-          <span class="kpi-label">Online</span>
-          <i class="ph ph-wifi-high kpi-icon" style="color:var(--success);"></i>
-        </div>
-        <div class="kpi-value">—</div>
-        <div class="kpi-sub">conectados agora</div>
-      </div>
-
-      <div class="kpi-card">
-        <div class="flex items-center justify-between">
-          <span class="kpi-label">Offline</span>
-          <i class="ph ph-wifi-slash kpi-icon" style="color:var(--danger);"></i>
-        </div>
-        <div class="kpi-value">—</div>
-        <div class="kpi-sub">sem comunicação</div>
-      </div>
-
-      <div class="kpi-card">
-        <div class="flex items-center justify-between">
-          <span class="kpi-label">Alertas</span>
-          <i class="ph ph-warning kpi-icon" style="color:var(--warning);"></i>
-        </div>
-        <div class="kpi-value">—</div>
-        <div class="kpi-sub">requerem atenção</div>
-      </div>
-
+  <div class="kpi-card" style="border-top:3px solid var(--success);">
+    <div class="flex items-center justify-between">
+      <span class="kpi-label">Online</span>
+      <i class="ph ph-wifi-high kpi-icon" style="color:var(--success);"></i>
     </div>
+    <div class="kpi-value">—</div>
+    <div class="kpi-sub">conectados agora</div>
+  </div>
+
+  <div class="kpi-card" style="border-top:3px solid var(--danger);">
+    <div class="flex items-center justify-between">
+      <span class="kpi-label">Offline</span>
+      <i class="ph ph-wifi-slash kpi-icon" style="color:var(--danger);"></i>
+    </div>
+    <div class="kpi-value">—</div>
+    <div class="kpi-sub">sem comunicação</div>
+  </div>
+
+  <div class="kpi-card" style="border-top:3px solid var(--warning);">
+    <div class="flex items-center justify-between">
+      <span class="kpi-label">Alertas</span>
+      <i class="ph ph-warning kpi-icon" style="color:var(--warning);"></i>
+    </div>
+    <div class="kpi-value">—</div>
+    <div class="kpi-sub">requerem atenção</div>
+  </div>
+
+</div>
 
     <!-- Filtros -->
     <div class="card mb-4">

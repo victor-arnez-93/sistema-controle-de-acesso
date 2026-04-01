@@ -17,61 +17,64 @@
 
   <main class="main-content">
 
-    <div class="page-header">
-      <div>
-        <h2 class="page-title">Relatórios</h2>
-        <p class="text-sm text-muted mt-1">Geração e exportação de relatórios do sistema</p>
-      </div>
-      <div class="page-actions">
-        <button class="btn btn-ghost btn-sm" id="btn-agendar">
-          <i class="ph ph-calendar-plus"></i> Agendar relatório
-        </button>
-        <button class="btn btn-primary btn-sm" id="btn-gerar">
-          <i class="ph ph-file-arrow-down"></i> Gerar relatório
-        </button>
-      </div>
+<div class="page-header">
+  <div>
+    <h2 class="page-title">Relatórios</h2>
+    <p class="text-sm text-muted mt-1">Geração e exportação de relatórios do sistema</p>
+    <p class="text-sm text-muted mt-1">
+      Gere, filtre e exporte relatórios de acessos, ocorrências e presença por período.
+    </p>
+  </div>
+  <div class="page-actions">
+    <button class="btn btn-ghost btn-sm" id="btn-agendar">
+      <i class="ph ph-calendar-plus"></i> Agendar relatório
+    </button>
+    <button class="btn btn-primary btn-sm" id="btn-gerar">
+      <i class="ph ph-file-arrow-down"></i> Gerar relatório
+    </button>
+  </div>
+</div>
+
+<!-- KPIs -->
+<div class="kpi-grid">
+
+  <div class="kpi-card" style="border-top:3px solid var(--primary);">
+    <div class="flex items-center justify-between">
+      <span class="kpi-label">Gerados hoje</span>
+      <i class="ph ph-file-text kpi-icon" style="color:var(--primary);"></i>
     </div>
+    <div class="kpi-value">—</div>
+    <div class="kpi-sub">relatórios exportados</div>
+  </div>
 
-    <!-- KPIs -->
-    <div class="kpi-grid">
-
-      <div class="kpi-card">
-        <div class="flex items-center justify-between">
-          <span class="kpi-label">Gerados hoje</span>
-          <i class="ph ph-file-text kpi-icon" style="color:var(--primary);"></i>
-        </div>
-        <div class="kpi-value">—</div>
-        <div class="kpi-sub">relatórios exportados</div>
-      </div>
-
-      <div class="kpi-card">
-        <div class="flex items-center justify-between">
-          <span class="kpi-label">Agendados</span>
-          <i class="ph ph-calendar-check kpi-icon" style="color:var(--success);"></i>
-        </div>
-        <div class="kpi-value">—</div>
-        <div class="kpi-sub">envios automáticos</div>
-      </div>
-
-      <div class="kpi-card">
-        <div class="flex items-center justify-between">
-          <span class="kpi-label">Este mês</span>
-          <i class="ph ph-chart-bar kpi-icon" style="color:var(--info);"></i>
-        </div>
-        <div class="kpi-value">—</div>
-        <div class="kpi-sub">total de acessos</div>
-      </div>
-
-      <div class="kpi-card">
-        <div class="flex items-center justify-between">
-          <span class="kpi-label">Ocorrências</span>
-          <i class="ph ph-warning kpi-icon" style="color:var(--warning);"></i>
-        </div>
-        <div class="kpi-value">—</div>
-        <div class="kpi-sub">registradas no período</div>
-      </div>
-
+  <div class="kpi-card" style="border-top:3px solid var(--success);">
+    <div class="flex items-center justify-between">
+      <span class="kpi-label">Agendados</span>
+      <i class="ph ph-calendar-check kpi-icon" style="color:var(--success);"></i>
     </div>
+    <div class="kpi-value">—</div>
+    <div class="kpi-sub">envios automáticos</div>
+  </div>
+
+  <div class="kpi-card" style="border-top:3px solid var(--warning);">
+    <div class="flex items-center justify-between">
+      <span class="kpi-label">Este mês</span>
+      <i class="ph ph-chart-bar kpi-icon" style="color:var(--warning);"></i>
+    </div>
+    <div class="kpi-value">—</div>
+    <div class="kpi-sub">total de acessos</div>
+  </div>
+
+  <div class="kpi-card" style="border-top:3px solid var(--danger);">
+    <div class="flex items-center justify-between">
+      <span class="kpi-label">Ocorrências</span>
+      <i class="ph ph-warning kpi-icon" style="color:var(--danger);"></i>
+    </div>
+    <div class="kpi-value">—</div>
+    <div class="kpi-sub">registradas no período</div>
+  </div>
+
+</div>
 
     <!-- Grid principal -->
     <div class="rel-grid">

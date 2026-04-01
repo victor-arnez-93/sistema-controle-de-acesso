@@ -44,31 +44,60 @@ async function loadPartials() {
   } catch (e) {
     console.warn('Erro ao carregar partials:', e);
   }
+
+  await aplicarLogoSalvo();
+}
+
+async function aplicarLogoSalvo() {
+  try {
+    const supabase = window.getSupabase?.();
+    if (!supabase) return; // ← Supabase ainda não pronto, aborta silenciosamente
+
+    const { data } = await supabase
+      .from('configuracoes')
+      .select('valor')
+      .eq('chave', 'aparencia')
+      .maybeSingle();
+
+    const logoUrl = data?.valor?.logoUrl;
+    const img = document.getElementById('logo-cliente');
+    if (img && logoUrl) img.src = logoUrl;
+  } catch (e) {
+    console.warn('Logo salvo não aplicado:', e);
+  }
 }
 
 /* ------------------------------------------------------------
    TEMA CLARO / ESCURO
    ------------------------------------------------------------ */
 function initTheme() {
-  const saved = localStorage.getItem('crv-theme') || 'light';
-  applyTheme(saved);
+  // Lê do Supabase via configuracoes.js — mas como main.js carrega antes,
+  // usa o data-theme já setado no <html> como fallback inicial.
+  // O configuracoes.js aplica o tema correto quando a página carrega.
+  const atual = document.documentElement.getAttribute('data-theme') || 'dark';
+  aplicarTemaHeader(atual);
 
   document.addEventListener('click', (e) => {
     if (e.target.closest('#theme-toggle')) {
       const current = document.documentElement.getAttribute('data-theme');
-      applyTheme(current === 'dark' ? 'light' : 'dark');
+      const novo    = current === 'dark' ? 'light' : 'dark';
+      aplicarTemaHeader(novo);
+      // Persiste no Supabase se getSupabase disponível
+      const supabase = window.getSupabase?.();
+      if (supabase) {
+        supabase.from('configuracoes')
+          .upsert({ chave: 'aparencia', valor: { tema: novo }, updated_at: new Date().toISOString() },
+                  { onConflict: 'chave' })
+          .then(() => {});
+      }
     }
   });
 }
 
-function applyTheme(theme) {
+function aplicarTemaHeader(theme) {
   document.documentElement.setAttribute('data-theme', theme);
-  localStorage.setItem('crv-theme', theme);
-
   const icon = document.getElementById('theme-icon');
-  if (icon) {
-    icon.className = theme === 'dark' ? 'ph ph-sun' : 'ph ph-moon';
-  }
+  if (icon) icon.className = theme === 'dark' ? 'ph ph-sun' : 'ph ph-moon';
 }
 
 /* ------------------------------------------------------------

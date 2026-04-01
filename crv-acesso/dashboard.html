@@ -28,25 +28,28 @@
   <!-- Conteúdo -->
   <main class="main-content">
 
-    <!-- Header -->
-    <div class="flex items-center justify-between mb-6">
-      <div>
-        <h2 class="page-title" style="font-size:1.6rem;">Dashboard</h2>
-        <p class="text-sm text-muted mt-1" id="dashboard-date">Carregando...</p>
-      </div>
+<!-- Header -->
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h2 class="page-title" style="font-size:1.6rem;">Dashboard</h2>
+    <p class="text-sm text-muted mt-1" id="dashboard-date">Carregando...</p>
+    <p class="text-sm text-muted mt-1">
+      Visão geral do sistema — presenças, acessos do dia, status dos equipamentos e alertas pendentes.
+    </p>
+  </div>
 
-      <div class="flex gap-2">
-        <select class="form-control" style="width:auto;font-size:0.8rem;">
-          <option>Todas as unidades</option>
-          <option>Unidade Centro</option>
-          <option>Unidade Norte</option>
-        </select>
+  <div class="flex gap-2">
+    <select class="form-control" style="width:auto;font-size:0.8rem;">
+      <option>Todas as unidades</option>
+      <option>Unidade Centro</option>
+      <option>Unidade Norte</option>
+    </select>
 
-        <button class="btn btn-primary btn-sm">
-          <i class="ph ph-arrow-clockwise"></i> Atualizar
-        </button>
-      </div>
-    </div>
+    <button class="btn btn-primary btn-sm">
+      <i class="ph ph-arrow-clockwise"></i> Atualizar
+    </button>
+  </div>
+</div>
 
     <!-- KPIs -->
     <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));">
@@ -69,38 +72,38 @@
         <div class="kpi-sub">funcionários ativos</div>
       </div>
 
-      <div class="kpi-card" style="border-top:3px solid var(--info);">
+      <div class="kpi-card" style="border-top:3px solid var(--warning);">
         <div class="flex items-center justify-between">
           <span class="kpi-label">Inativos</span>
-          <i class="ph ph-user-minus kpi-icon" style="color:var(--info);"></i>
+          <i class="ph ph-user-minus kpi-icon" style="color:var(--warning);"></i>
         </div>
         <div class="kpi-value" id="kpi-inativos">--</div>
         <div class="kpi-sub">funcionários inativos</div>
       </div>
 
-      <div class="kpi-card" style="border-top:3px solid var(--danger);">
+      <div class="kpi-card" style="border-top:3px solid var(--info);">
         <div class="flex items-center justify-between">
           <span class="kpi-label">Acessos hoje</span>
-          <i class="ph ph-activity kpi-icon" style="color:var(--danger);"></i>
+          <i class="ph ph-activity kpi-icon" style="color:var(--info);"></i>
         </div>
         <div class="kpi-value" id="kpi-acessos">--</div>
         <div class="kpi-sub">registros do dia</div>
       </div>
 
       <!-- Mantive seus outros cards VISUAIS (demo) intactos -->
-      <div class="kpi-card" style="border-top:3px solid var(--warning);">
+      <div class="kpi-card" style="border-top:3px solid var(--success);">
         <div class="flex items-center justify-between">
           <span class="kpi-label">Catracas online</span>
-          <i class="ph ph-wifi-high kpi-icon" style="color:var(--warning);"></i>
+          <i class="ph ph-wifi-high kpi-icon" style="color:var(--success);"></i>
         </div>
         <div class="kpi-value">4<span style="font-size:1rem;color:var(--text-muted)">/4</span></div>
         <div class="kpi-sub">todas operacionais</div>
       </div>
 
-      <div class="kpi-card" style="border-top:3px solid #8A716A;">
+      <div class="kpi-card" style="border-top:3px solid var(--danger);">
         <div class="flex items-center justify-between">
           <span class="kpi-label">Ocorrências</span>
-          <i class="ph ph-warning kpi-icon" style="color:#8A716A;"></i>
+          <i class="ph ph-warning kpi-icon" style="color:var(--danger);"></i>
         </div>
         <div class="kpi-value">5</div>
         <div class="kpi-sub">aguardando análise</div>

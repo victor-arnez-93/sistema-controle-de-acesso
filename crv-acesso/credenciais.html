@@ -17,62 +17,65 @@
 
   <main class="main-content">
 
-    <!-- Cabeçalho -->
-    <div class="page-header">
-      <div>
-        <h2 class="page-title">Credenciais</h2>
-        <p class="text-sm text-muted mt-1">Gestão de cartões, senhas e biometrias</p>
-      </div>
-      <div class="flex gap-2">
-        <button class="btn btn-ghost btn-sm">
-          <i class="ph ph-download-simple"></i> Exportar
-        </button>
-        <button class="btn btn-primary btn-sm" id="btn-nova">
-          <i class="ph ph-plus"></i> Nova Credencial
-        </button>
-      </div>
+<!-- Cabeçalho -->
+<div class="page-header">
+  <div>
+    <h2 class="page-title">Credenciais</h2>
+    <p class="text-sm text-muted mt-1">Gestão de cartões, senhas e biometrias</p>
+    <p class="text-sm text-muted mt-1">
+      Cadastre e gerencie os meios de acesso de cada funcionário: cartões, senhas e biometrias.
+    </p>
+  </div>
+  <div class="flex gap-2">
+    <button class="btn btn-ghost btn-sm">
+      <i class="ph ph-download-simple"></i> Exportar
+    </button>
+    <button class="btn btn-primary btn-sm" id="btn-nova">
+      <i class="ph ph-plus"></i> Nova Credencial
+    </button>
+  </div>
+</div>
+
+<!-- KPIs -->
+<div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:20px;">
+
+  <div class="kpi-card" style="border-top:3px solid var(--primary);">
+    <div class="flex items-center justify-between">
+      <span class="kpi-label">Total</span>
+      <i class="ph ph-key kpi-icon" style="color:var(--primary);"></i>
     </div>
+    <div class="kpi-value">—</div>
+    <div class="kpi-sub">credenciais cadastradas</div>
+  </div>
 
-    <!-- KPIs -->
-    <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:20px;">
-
-      <div class="kpi-card">
-        <div class="flex items-center justify-between">
-          <span class="kpi-label">Total</span>
-          <i class="ph ph-key kpi-icon" style="color:var(--primary);"></i>
-        </div>
-        <div class="kpi-value">—</div>
-        <div class="kpi-sub">credenciais cadastradas</div>
-      </div>
-
-      <div class="kpi-card">
-        <div class="flex items-center justify-between">
-          <span class="kpi-label">Cartões ativos</span>
-          <i class="ph ph-credit-card kpi-icon" style="color:var(--success);"></i>
-        </div>
-        <div class="kpi-value">—</div>
-        <div class="kpi-sub">em uso</div>
-      </div>
-
-      <div class="kpi-card">
-        <div class="flex items-center justify-between">
-          <span class="kpi-label">Biometrias</span>
-          <i class="ph ph-fingerprint kpi-icon" style="color:var(--info);"></i>
-        </div>
-        <div class="kpi-value">—</div>
-        <div class="kpi-sub">digitais + facial</div>
-      </div>
-
-      <div class="kpi-card">
-        <div class="flex items-center justify-between">
-          <span class="kpi-label">Bloqueadas</span>
-          <i class="ph ph-lock kpi-icon" style="color:var(--danger);"></i>
-        </div>
-        <div class="kpi-value">—</div>
-        <div class="kpi-sub">credenciais suspensas</div>
-      </div>
-
+  <div class="kpi-card" style="border-top:3px solid var(--success);">
+    <div class="flex items-center justify-between">
+      <span class="kpi-label">Cartões ativos</span>
+      <i class="ph ph-credit-card kpi-icon" style="color:var(--success);"></i>
     </div>
+    <div class="kpi-value">—</div>
+    <div class="kpi-sub">em uso</div>
+  </div>
+
+  <div class="kpi-card" style="border-top:3px solid var(--warning);">
+    <div class="flex items-center justify-between">
+      <span class="kpi-label">Biometrias</span>
+      <i class="ph ph-fingerprint kpi-icon" style="color:var(--warning);"></i>
+    </div>
+    <div class="kpi-value">—</div>
+    <div class="kpi-sub">digitais + facial</div>
+  </div>
+
+  <div class="kpi-card" style="border-top:3px solid var(--danger);">
+    <div class="flex items-center justify-between">
+      <span class="kpi-label">Bloqueadas</span>
+      <i class="ph ph-lock kpi-icon" style="color:var(--danger);"></i>
+    </div>
+    <div class="kpi-value">—</div>
+    <div class="kpi-sub">credenciais suspensas</div>
+  </div>
+
+</div>
 
     <!-- Abas por tipo -->
     <div class="cred-tabs">

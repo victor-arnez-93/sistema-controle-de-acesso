@@ -7,11 +7,14 @@ document.addEventListener('DOMContentLoaded', () => {
   initNav();
   initTemas();
   initToggles();
+  initLogo();
   initIntegracao();
   initBackup();
   initAvancado();
   initAcoesCabecalho();
+  initModalOperador();
   carregarConfiguracoes();
+  carregarOperadores();
 });
 
 
@@ -22,28 +25,19 @@ document.addEventListener('DOMContentLoaded', () => {
 function initNav() {
   document.querySelectorAll('.cfg-nav-item').forEach(item => {
     item.addEventListener('click', () => {
-      // Remove active de todos
       document.querySelectorAll('.cfg-nav-item').forEach(i => i.classList.remove('active'));
       item.classList.add('active');
-
-      // Oculta todas as seções
       document.querySelectorAll('.cfg-secao').forEach(s => s.classList.add('cfg-hidden'));
-
-      // Exibe seção correspondente
       const secao = document.getElementById(`secao-${item.dataset.secao}`);
       if (secao) secao.classList.remove('cfg-hidden');
-
-      // Scroll suave para o topo do conteúdo
-      document.querySelector('.cfg-conteudo')?.scrollIntoView({
-        behavior: 'smooth', block: 'start'
-      });
+      document.querySelector('.cfg-conteudo')?.scrollTo({ top: 0, behavior: 'smooth' });
     });
   });
 }
 
 
 /* =====================================================
-   TEMAS
+   TEMAS — sem localStorage, persiste no Supabase
    ===================================================== */
 
 function initTemas() {
@@ -54,27 +48,151 @@ function initTemas() {
       aplicarTema(item.dataset.tema);
     });
   });
-
-  // Carrega tema salvo
-  const temaSalvo = localStorage.getItem('crv-tema') || 'light';
-  const itemAtivo = document.querySelector(`.cfg-tema-item[data-tema="${temaSalvo}"]`);
-  if (itemAtivo) {
-    document.querySelectorAll('.cfg-tema-item').forEach(i => i.classList.remove('active'));
-    itemAtivo.classList.add('active');
-  }
 }
 
 function aplicarTema(tema) {
-  const html = document.documentElement;
+  document.documentElement.setAttribute('data-theme', tema || 'dark');
+}
 
-  if (tema === 'system') {
-    const prefereEscuro = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    html.setAttribute('data-theme', prefereEscuro ? 'dark' : 'light');
+function marcarTemaAtivo(tema) {
+  document.querySelectorAll('.cfg-tema-item').forEach(i => i.classList.remove('active'));
+  const el = document.querySelector(`.cfg-tema-item[data-tema="${tema}"]`);
+  if (el) el.classList.add('active');
+}
+
+
+/* =====================================================
+   LOGO DA EMPRESA
+   ===================================================== */
+
+function initLogo() {
+  const input    = document.getElementById('cfg-logo-input');
+  const btnRem   = document.getElementById('btn-remover-logo');
+
+  input?.addEventListener('change', async function () {
+    const file = this.files[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      setLogoStatus('Arquivo muito grande. Máximo: 2MB.', 'erro');
+      return;
+    }
+
+    setLogoStatus('Enviando...', 'info');
+
+    const supabase = window.getSupabase();
+    const ext      = file.name.split('.').pop().toLowerCase();
+    const path     = `logos/logo_empresa.${ext}`;
+
+    const { error: upErr } = await supabase.storage
+      .from('crv-assets')
+      .upload(path, file, { upsert: true, contentType: file.type });
+
+    if (upErr) {
+      setLogoStatus('Erro ao enviar: ' + upErr.message, 'erro');
+      return;
+    }
+
+    const { data: urlData } = supabase.storage
+      .from('crv-assets')
+      .getPublicUrl(path);
+
+    // Salva a URL na tabela configuracoes
+    await salvarChave('aparencia', {
+      ...((await lerChave('aparencia')) || {}),
+      logoUrl: urlData.publicUrl,
+    });
+
+    exibirLogoPreview(urlData.publicUrl);
+    aplicarLogoHeader(urlData.publicUrl);
+    setLogoStatus('Logo enviado com sucesso!', 'ok');
+
+    await registrarAuditoria({
+      acao:      'editar',
+      modulo:    'configuracoes',
+      tabela:    'configuracoes',
+      descricao: 'Logo da empresa atualizado',
+      nivel:     'info',
+    });
+  });
+
+  btnRem?.addEventListener('click', async () => {
+    if (!confirm('Deseja remover o logo da empresa?')) return;
+
+    const supabase = window.getSupabase();
+
+    // Remove do storage
+    await supabase.storage.from('crv-assets').remove([
+      'logos/logo_empresa.png',
+      'logos/logo_empresa.jpg',
+      'logos/logo_empresa.svg',
+    ]);
+
+    // Remove da config
+    const atual = (await lerChave('aparencia')) || {};
+    delete atual.logoUrl;
+    await salvarChave('aparencia', atual);
+
+    // Restaura logo padrão no header
+    aplicarLogoHeader(null);
+    ocultarLogoPreview();
+    setLogoStatus('Logo removido.', 'ok');
+
+    await registrarAuditoria({
+      acao:      'editar',
+      modulo:    'configuracoes',
+      tabela:    'configuracoes',
+      descricao: 'Logo da empresa removido',
+      nivel:     'aviso',
+    });
+  });
+}
+
+function exibirLogoPreview(url) {
+  const img         = document.getElementById('cfg-logo-img');
+  const placeholder = document.getElementById('cfg-logo-placeholder');
+  const btnRem      = document.getElementById('btn-remover-logo');
+
+  if (img)         { img.src = url; img.style.display = 'block'; }
+  if (placeholder) placeholder.style.display = 'none';
+  if (btnRem)      btnRem.style.display = '';
+}
+
+function ocultarLogoPreview() {
+  const img         = document.getElementById('cfg-logo-img');
+  const placeholder = document.getElementById('cfg-logo-placeholder');
+  const btnRem      = document.getElementById('btn-remover-logo');
+
+  if (img)         { img.src = ''; img.style.display = 'none'; }
+  if (placeholder) placeholder.style.display = '';
+  if (btnRem)      btnRem.style.display = 'none';
+}
+
+function setLogoStatus(msg, tipo) {
+  const el = document.getElementById('cfg-logo-status');
+  if (!el) return;
+  const cores = { ok: 'var(--success)', erro: 'var(--danger)', info: 'var(--text-muted)' };
+  el.style.color = cores[tipo] || 'var(--text-muted)';
+  el.textContent = msg;
+}
+
+/**
+ * Aplica o logo no header (posição exata onde está o logo da empresa).
+ * O main.js renderiza o header com o elemento [data-logo-empresa].
+ * Se logoUrl for null, restaura o logo padrão CRV.
+ */
+function aplicarLogoHeader(logoUrl) {
+  // Tenta o container de logo do header injetado pelo main.js
+  const logoWrap = document.querySelector('[data-logo-empresa]');
+  if (!logoWrap) return;
+
+  if (logoUrl) {
+    logoWrap.innerHTML = `<img src="${logoUrl}" alt="Logo da empresa"
+      style="height:40px;max-width:180px;object-fit:contain;">`;
   } else {
-    html.setAttribute('data-theme', tema);
+    // Restaura o HTML padrão que o main.js teria colocado
+    logoWrap.innerHTML = logoWrap.dataset.defaultHtml || '';
   }
-
-  localStorage.setItem('crv-tema', tema);
 }
 
 
@@ -83,46 +201,29 @@ function aplicarTema(tema) {
    ===================================================== */
 
 function initToggles() {
-  // Logout automático: habilita/desabilita select de inatividade
-  const checkLogout  = document.getElementById('cfg-logout-auto');
-  const selInativ    = document.getElementById('cfg-inatividade');
+  const deps = [
+    { check: 'cfg-logout-auto',  sel: 'cfg-inatividade'    },
+    { check: 'cfg-senha-expira', sel: 'cfg-prazo-senha'    },
+    { check: 'cfg-sync-auto',    sel: 'cfg-sync-intervalo' },
+    { check: 'cfg-backup-auto',  sel: 'cfg-backup-freq'    },
+    { check: 'cfg-backup-auto',  sel: 'cfg-backup-retencao'},
+  ];
 
-  checkLogout?.addEventListener('change', function () {
-    if (selInativ) selInativ.disabled = !this.checked;
+  deps.forEach(({ check, sel }) => {
+    const chk = document.getElementById(check);
+    const s   = document.getElementById(sel);
+    if (chk && s) {
+      s.disabled = !chk.checked;
+      chk.addEventListener('change', function () {
+        s.disabled = !this.checked;
+      });
+    }
   });
 
-  // Expiração de senha: habilita/desabilita select de prazo
-  const checkExpira  = document.getElementById('cfg-senha-expira');
-  const selPrazo     = document.getElementById('cfg-prazo-senha');
-
-  checkExpira?.addEventListener('change', function () {
-    if (selPrazo) selPrazo.disabled = !this.checked;
-  });
-
-  // Sincronização automática: habilita/desabilita select de intervalo
-  const checkSync    = document.getElementById('cfg-sync-auto');
-  const selIntervalo = document.getElementById('cfg-sync-intervalo');
-
-  checkSync?.addEventListener('change', function () {
-    if (selIntervalo) selIntervalo.disabled = !this.checked;
-  });
-
-  // Backup automático: habilita/desabilita selects de backup
-  const checkBackup  = document.getElementById('cfg-backup-auto');
-  const selFreq      = document.getElementById('cfg-backup-freq');
-  const selRetencao  = document.getElementById('cfg-backup-retencao');
-
-  checkBackup?.addEventListener('change', function () {
-    if (selFreq)     selFreq.disabled     = !this.checked;
-    if (selRetencao) selRetencao.disabled  = !this.checked;
-  });
-
-  // Densidade compacta
   document.getElementById('cfg-densidade')?.addEventListener('change', function () {
     document.documentElement.classList.toggle('density-compact', this.checked);
   });
 
-  // Animações reduzidas
   document.getElementById('cfg-anim-reduzida')?.addEventListener('change', function () {
     document.documentElement.classList.toggle('reduce-motion', this.checked);
   });
@@ -150,33 +251,24 @@ function testarConexaoAPI() {
   }
 
   btn.disabled = true;
-  btn.innerHTML = '<i class="ph ph-spinner"></i> Testando...';
-
+  btn.innerHTML = '<i class="ph ph-circle-notch"></i> Testando...';
   if (status) {
     status.className = 'cfg-integ-status testando';
     status.innerHTML = '<i class="ph ph-circle-notch"></i><span>Testando conexão...</span>';
   }
 
-  // TODO: chamar backend /api/integracao/testar com url e porta
+  // Nota: teste real requer backend/Edge Function que faça a requisição
+  // ao equipamento Control iD. Aqui a UI está preparada para receber o resultado.
   setTimeout(() => {
     btn.disabled = false;
     btn.innerHTML = '<i class="ph ph-plug"></i> Testar conexão';
-
-    // Simula sucesso — backend deve retornar resultado real
-    const sucesso = Math.random() > 0.3;
-
     if (status) {
-      if (sucesso) {
-        status.className = 'cfg-integ-status ok';
-        status.innerHTML = '<i class="ph ph-check-circle"></i><span>Conectado com sucesso</span>';
-      } else {
-        status.className = 'cfg-integ-status erro';
-        status.innerHTML = '<i class="ph ph-x-circle"></i><span>Falha na conexão</span>';
-      }
+      status.className = 'cfg-integ-status';
+      status.innerHTML = `<i class="ph ph-info"></i>
+        <span class="text-sm text-muted">Configure um Edge Function para teste real.</span>`;
     }
-
-    console.log(`Testar API: ${url}:${porta} — ${sucesso ? 'OK' : 'ERRO'}`);
-  }, 1800);
+    console.log(`Testar API: ${url}:${porta} — requer backend`);
+  }, 1200);
 }
 
 
@@ -192,10 +284,10 @@ function initBackup() {
 function fazerBackup() {
   const btn = document.getElementById('btn-backup-agora');
   btn.disabled = true;
-  btn.innerHTML = '<i class="ph ph-spinner"></i> Gerando...';
+  btn.innerHTML = '<i class="ph ph-circle-notch"></i> Gerando...';
 
-  // TODO: chamar backend /api/backup/gerar
-  setTimeout(() => {
+  // Nota: backup real requer Edge Function ou serviço externo.
+  setTimeout(async () => {
     btn.disabled = false;
     btn.innerHTML = '<i class="ph ph-cloud-arrow-up"></i> Fazer backup agora';
 
@@ -206,21 +298,31 @@ function fazerBackup() {
     const elAvancado = document.getElementById('cfg-ultimo-backup');
     if (elAvancado) elAvancado.textContent = agora;
 
-    console.log('Backup gerado:', agora);
+    await registrarAuditoria({
+      acao:      'exportar',
+      modulo:    'backup',
+      descricao: 'Backup manual solicitado',
+      nivel:     'info',
+    });
   }, 2000);
 }
 
 function restaurarBackup() {
-  const input = document.createElement('input');
-  input.type  = 'file';
-  input.accept = '.zip,.sql,.bak';
-  input.onchange = (e) => {
+  const input   = document.createElement('input');
+  input.type    = 'file';
+  input.accept  = '.zip,.sql,.bak';
+  input.onchange = async (e) => {
     const arquivo = e.target.files[0];
     if (!arquivo) return;
-    const confirma = confirm(`Deseja restaurar o backup "${arquivo.name}"?\nTodos os dados atuais serão substituídos.`);
-    if (!confirma) return;
-    // TODO: enviar arquivo ao backend /api/backup/restaurar
-    console.log('Restaurar backup:', arquivo.name);
+    const ok = confirm(`Deseja restaurar o backup "${arquivo.name}"?\nTodos os dados atuais serão substituídos.`);
+    if (!ok) return;
+    await registrarAuditoria({
+      acao:      'editar',
+      modulo:    'backup',
+      descricao: `Restauração de backup solicitada: ${arquivo.name}`,
+      nivel:     'critico',
+    });
+    console.log('Restaurar backup:', arquivo.name, '— requer backend/Edge Function');
   };
   input.click();
 }
@@ -231,28 +333,57 @@ function restaurarBackup() {
    ===================================================== */
 
 function initAvancado() {
-  document.getElementById('btn-limpar-logs')?.addEventListener('click', () => {
+  document.getElementById('btn-limpar-logs')?.addEventListener('click', async () => {
     const ok = confirm('Deseja realmente limpar todos os logs de auditoria?\nEsta ação não pode ser desfeita.');
     if (!ok) return;
-    // TODO: chamar backend /api/auditoria/limpar-tudo
-    console.log('Limpar todos os logs');
+
+    const supabase = window.getSupabase();
+    const { error } = await supabase.from('auditoria').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+
+    if (error) { alert('Erro ao limpar logs: ' + error.message); return; }
+
+    await registrarAuditoria({
+      acao:      'excluir',
+      modulo:    'auditoria',
+      tabela:    'auditoria',
+      descricao: 'Todos os logs de auditoria foram apagados',
+      nivel:     'critico',
+    });
+
+    alert('Logs de auditoria removidos.');
   });
 
-  document.getElementById('btn-reset-cfg')?.addEventListener('click', () => {
+  document.getElementById('btn-reset-cfg')?.addEventListener('click', async () => {
     const ok = confirm('Deseja redefinir TODAS as configurações para os valores padrão?\nEsta ação não pode ser desfeita.');
     if (!ok) return;
-    // TODO: chamar backend /api/configuracoes/resetar
-    console.log('Redefinir configurações');
+
+    const supabase = window.getSupabase();
+    await supabase.from('configuracoes').delete().neq('chave', '__placeholder__');
+
+    await registrarAuditoria({
+      acao:      'excluir',
+      modulo:    'configuracoes',
+      tabela:    'configuracoes',
+      descricao: 'Todas as configurações foram redefinidas para o padrão',
+      nivel:     'critico',
+    });
+
     location.reload();
   });
 
-  document.getElementById('btn-limpar-base')?.addEventListener('click', () => {
-    const confirmacao = prompt(
-      'ATENÇÃO: Esta ação apagará permanentemente todos os dados.\n\nDigite CONFIRMAR para prosseguir:'
-    );
+  document.getElementById('btn-limpar-base')?.addEventListener('click', async () => {
+    const confirmacao = prompt('ATENÇÃO: Esta ação apagará permanentemente todos os dados.\n\nDigite CONFIRMAR para prosseguir:');
     if (confirmacao !== 'CONFIRMAR') return;
-    // TODO: chamar backend /api/sistema/limpar-base
-    console.log('Limpar base de dados');
+
+    await registrarAuditoria({
+      acao:      'excluir',
+      modulo:    'sistema',
+      descricao: 'Limpeza total da base de dados solicitada',
+      nivel:     'critico',
+    });
+
+    // Requer Edge Function para executar DELETE em cascata com segurança
+    alert('Solicitação registrada. Configure uma Edge Function para executar a limpeza completa.');
   });
 }
 
@@ -267,241 +398,366 @@ function initAcoesCabecalho() {
   document.getElementById('btn-cfg-restaurar')?.addEventListener('click', () => {
     const ok = confirm('Deseja restaurar todas as configurações para os valores padrão?');
     if (!ok) return;
-    // TODO: chamar backend
-    console.log('Restaurar padrões');
     location.reload();
   });
-
-  document.getElementById('btn-novo-operador')?.addEventListener('click', () => {
-    // TODO: abrir modal de novo operador
-    console.log('Novo operador');
-  });
 }
 
 
 /* =====================================================
-   CARREGAR / SALVAR CONFIGURAÇÕES
+   CARREGAR CONFIGURAÇÕES DO SUPABASE
    ===================================================== */
 
-function carregarConfiguracoes() {
-  // TODO: buscar configurações do backend /api/configuracoes
-  // e preencher os campos com os valores retornados.
-  // Exemplo de estrutura esperada:
-  // {
-  //   empresa: { nome, cnpj, endereco, tel },
-  //   regional: { fuso, dataFmt, idioma },
-  //   comportamento: { logoutAuto, inatividade, somAlerta },
-  //   aparencia: { tema, sidebarCollapsed, animReduzida, densidade },
-  //   seguranca: { senhaForte, senhaExpira, prazoSenha, twofa, tentativas },
-  //   notificacoes: { email, cc, negado, critico, offline, relatorio },
-  //   integracao: { apiUrl, apiPorta, apiUsuario, syncAuto, syncIntervalo },
-  //   backup: { auto, freq, retencao, ultimoBackup },
-  // }
-  console.log('Carregar configurações do backend');
-}
+async function carregarConfiguracoes() {
+  const supabase = window.getSupabase();
+  if (!supabase) return;
+  const { data, error } = await supabase
+    .from('configuracoes')
+    .select('chave, valor');
 
-function salvarConfiguracoes() {
-  const btn = document.getElementById('btn-cfg-salvar');
-  btn.disabled = true;
-  btn.innerHTML = '<i class="ph ph-spinner"></i> Salvando...';
+  if (error || !data) return;
 
-  const dados = coletarConfiguracoes();
+  const cfg = {};
+  data.forEach(r => { cfg[r.chave] = r.valor; });
 
-  // TODO: enviar ao backend via PUT /api/configuracoes
-  setTimeout(() => {
-    btn.disabled = false;
-    btn.innerHTML = '<i class="ph ph-floppy-disk"></i> Salvar alterações';
-    console.log('Configurações salvas:', dados);
-  }, 1000);
-}
-
-function coletarConfiguracoes() {
-  const temaSel = document.querySelector('.cfg-tema-item.active')?.dataset.tema || 'light';
-
-  return {
-    empresa: {
-      nome:      document.getElementById('cfg-empresa-nome')?.value.trim(),
-      cnpj:      document.getElementById('cfg-empresa-cnpj')?.value.trim(),
-      endereco:  document.getElementById('cfg-empresa-endereco')?.value.trim(),
-      tel:       document.getElementById('cfg-empresa-tel')?.value.trim(),
-    },
-    regional: {
-      fuso:      document.getElementById('cfg-fuso')?.value,
-      dataFmt:   document.getElementById('cfg-data-fmt')?.value,
-      idioma:    document.getElementById('cfg-idioma')?.value,
-    },
-    comportamento: {
-      logoutAuto:  document.getElementById('cfg-logout-auto')?.checked,
-      inatividade: document.getElementById('cfg-inatividade')?.value,
-      somAlerta:   document.getElementById('cfg-som-alerta')?.checked,
-    },
-    aparencia: {
-      tema:              temaSel,
-      sidebarCollapsed:  document.getElementById('cfg-sidebar-collapsed')?.checked,
-      animReduzida:      document.getElementById('cfg-anim-reduzida')?.checked,
-      densidade:         document.getElementById('cfg-densidade')?.checked,
-    },
-    seguranca: {
-      senhaForte:  document.getElementById('cfg-senha-forte')?.checked,
-      senhaExpira: document.getElementById('cfg-senha-expira')?.checked,
-      prazoSenha:  document.getElementById('cfg-prazo-senha')?.value,
-      twofa:       document.getElementById('cfg-2fa')?.checked,
-      tentativas:  document.getElementById('cfg-tentativas')?.value,
-    },
-    notificacoes: {
-      email:     document.getElementById('cfg-email-notif')?.value.trim(),
-      cc:        document.getElementById('cfg-email-cc')?.value.trim(),
-      negado:    document.getElementById('cfg-notif-negado')?.checked,
-      critico:   document.getElementById('cfg-notif-critico')?.checked,
-      offline:   document.getElementById('cfg-notif-offline')?.checked,
-      relatorio: document.getElementById('cfg-notif-relatorio')?.checked,
-    },
-    integracao: {
-      apiUrl:        document.getElementById('cfg-api-url')?.value.trim(),
-      apiPorta:      document.getElementById('cfg-api-porta')?.value.trim(),
-      apiUsuario:    document.getElementById('cfg-api-usuario')?.value.trim(),
-      syncAuto:      document.getElementById('cfg-sync-auto')?.checked,
-      syncIntervalo: document.getElementById('cfg-sync-intervalo')?.value,
-    },
-    backup: {
-      auto:      document.getElementById('cfg-backup-auto')?.checked,
-      freq:      document.getElementById('cfg-backup-freq')?.value,
-      retencao:  document.getElementById('cfg-backup-retencao')?.value,
-    },
-  };
-}
-
-
-/* =====================================================
-   HELPERS EXPORTADOS
-   (usados pelo backend ao injetar dados)
-   ===================================================== */
-
-/**
- * Preenche os campos com os dados vindos do backend.
- * @param {Object} cfg
- */
-function preencherConfiguracoes(cfg) {
-  if (!cfg) return;
+  const emp  = cfg['empresa']        || {};
+  const reg  = cfg['regional']       || {};
+  const comp = cfg['comportamento']  || {};
+  const ap   = cfg['aparencia']      || {};
+  const seg  = cfg['seguranca']      || {};
+  const nt   = cfg['notificacoes']   || {};
+  const intg = cfg['integracao']     || {};
+  const bkp  = cfg['backup']         || {};
 
   // Empresa
-  if (cfg.empresa) {
-    setValue('cfg-empresa-nome',     cfg.empresa.nome);
-    setValue('cfg-empresa-cnpj',     cfg.empresa.cnpj);
-    setValue('cfg-empresa-endereco', cfg.empresa.endereco);
-    setValue('cfg-empresa-tel',      cfg.empresa.tel);
-  }
+  setVal('cfg-empresa-nome',     emp.nome);
+  setVal('cfg-empresa-cnpj',     emp.cnpj);
+  setVal('cfg-empresa-endereco', emp.endereco);
+  setVal('cfg-empresa-tel',      emp.tel);
 
   // Regional
-  if (cfg.regional) {
-    setValue('cfg-fuso',     cfg.regional.fuso);
-    setValue('cfg-data-fmt', cfg.regional.dataFmt);
-    setValue('cfg-idioma',   cfg.regional.idioma);
-  }
+  setVal('cfg-fuso',     reg.fuso);
+  setVal('cfg-data-fmt', reg.dataFmt);
+  setVal('cfg-idioma',   reg.idioma);
 
   // Comportamento
-  if (cfg.comportamento) {
-    setChecked('cfg-logout-auto', cfg.comportamento.logoutAuto);
-    setValue('cfg-inatividade',    cfg.comportamento.inatividade);
-    setChecked('cfg-som-alerta',   cfg.comportamento.somAlerta);
-  }
+  setCheck('cfg-logout-auto', comp.logoutAuto !== false);
+  setVal('cfg-inatividade',   comp.inatividade || '30');
+  setCheck('cfg-som-alerta',  comp.somAlerta);
 
   // Aparência
-  if (cfg.aparencia) {
-    aplicarTema(cfg.aparencia.tema || 'light');
-    const itemTema = document.querySelector(`.cfg-tema-item[data-tema="${cfg.aparencia.tema}"]`);
-    if (itemTema) {
-      document.querySelectorAll('.cfg-tema-item').forEach(i => i.classList.remove('active'));
-      itemTema.classList.add('active');
-    }
-    setChecked('cfg-sidebar-collapsed', cfg.aparencia.sidebarCollapsed);
-    setChecked('cfg-anim-reduzida',     cfg.aparencia.animReduzida);
-    setChecked('cfg-densidade',         cfg.aparencia.densidade);
+  if (ap.tema) {
+    aplicarTema(ap.tema);
+    marcarTemaAtivo(ap.tema);
+  }
+  setCheck('cfg-sidebar-collapsed', ap.sidebarCollapsed);
+  setCheck('cfg-anim-reduzida',     ap.animReduzida);
+  setCheck('cfg-densidade',         ap.densidade);
+
+  // Logo salvo
+  if (ap.logoUrl) {
+    exibirLogoPreview(ap.logoUrl);
+    aplicarLogoHeader(ap.logoUrl);
   }
 
   // Segurança
-  if (cfg.seguranca) {
-    setChecked('cfg-senha-forte',  cfg.seguranca.senhaForte);
-    setChecked('cfg-senha-expira', cfg.seguranca.senhaExpira);
-    setValue('cfg-prazo-senha',    cfg.seguranca.prazoSenha);
-    setChecked('cfg-2fa',          cfg.seguranca.twofa);
-    setValue('cfg-tentativas',     cfg.seguranca.tentativas);
-  }
+  setCheck('cfg-senha-forte',  seg.senhaForte !== false);
+  setCheck('cfg-senha-expira', seg.senhaExpira !== false);
+  setVal('cfg-prazo-senha',    seg.prazoSenha || '60');
+  setCheck('cfg-2fa',          seg.twofa);
+  setVal('cfg-tentativas',     seg.tentativas || '5');
 
   // Notificações
-  if (cfg.notificacoes) {
-    setValue('cfg-email-notif',     cfg.notificacoes.email);
-    setValue('cfg-email-cc',        cfg.notificacoes.cc);
-    setChecked('cfg-notif-negado',  cfg.notificacoes.negado);
-    setChecked('cfg-notif-critico', cfg.notificacoes.critico);
-    setChecked('cfg-notif-offline', cfg.notificacoes.offline);
-    setChecked('cfg-notif-relatorio', cfg.notificacoes.relatorio);
-  }
+  setVal('cfg-email-notif',       nt.email);
+  setVal('cfg-email-cc',          nt.cc);
+  setCheck('cfg-notif-negado',    nt.negado !== false);
+  setCheck('cfg-notif-critico',   nt.critico !== false);
+  setCheck('cfg-notif-offline',   nt.offline !== false);
+  setCheck('cfg-notif-relatorio', nt.relatorio);
 
   // Integração
-  if (cfg.integracao) {
-    setValue('cfg-api-url',         cfg.integracao.apiUrl);
-    setValue('cfg-api-porta',       cfg.integracao.apiPorta);
-    setValue('cfg-api-usuario',     cfg.integracao.apiUsuario);
-    setChecked('cfg-sync-auto',     cfg.integracao.syncAuto);
-    setValue('cfg-sync-intervalo',  cfg.integracao.syncIntervalo);
-  }
+  setVal('cfg-api-url',      intg.apiUrl);
+  setVal('cfg-api-porta',    intg.apiPorta);
+  setVal('cfg-api-usuario',  intg.apiUsuario);
+  setCheck('cfg-sync-auto',  intg.syncAuto !== false);
+  setVal('cfg-sync-intervalo', intg.syncIntervalo || '5');
 
   // Backup
-  if (cfg.backup) {
-    setChecked('cfg-backup-auto',   cfg.backup.auto);
-    setValue('cfg-backup-freq',     cfg.backup.freq);
-    setValue('cfg-backup-retencao', cfg.backup.retencao);
-
-    if (cfg.backup.ultimoBackup) {
-      const el = document.getElementById('cfg-backup-ultimo');
-      if (el) el.innerHTML = `<i class="ph ph-clock"></i> Último backup: ${cfg.backup.ultimoBackup}`;
-      const elAv = document.getElementById('cfg-ultimo-backup');
-      if (elAv) elAv.textContent = cfg.backup.ultimoBackup;
-    }
+  setCheck('cfg-backup-auto',      bkp.auto !== false);
+  setVal('cfg-backup-freq',        bkp.freq || 'diario');
+  setVal('cfg-backup-retencao',    bkp.retencao || '30');
+  if (bkp.ultimoBackup) {
+    const el = document.getElementById('cfg-backup-ultimo');
+    const elA = document.getElementById('cfg-ultimo-backup');
+    if (el)  el.innerHTML  = `<i class="ph ph-check-circle" style="color:var(--success);"></i> Último backup: ${bkp.ultimoBackup}`;
+    if (elA) elA.textContent = bkp.ultimoBackup;
   }
 }
 
-/**
- * Renderiza uma linha na tabela de operadores.
- * @param {Object} op
- */
+
+/* =====================================================
+   SALVAR CONFIGURAÇÕES NO SUPABASE
+   ===================================================== */
+
+async function salvarConfiguracoes() {
+  const btn = document.getElementById('btn-cfg-salvar');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="ph ph-circle-notch"></i> Salvando...';
+
+  const temaSel = document.querySelector('.cfg-tema-item.active')?.dataset.tema || 'dark';
+
+  // Coleta o logoUrl atual (não sobrescreve com vazio)
+  const apAtual = (await lerChave('aparencia')) || {};
+
+  const grupos = {
+    empresa: {
+      nome:     getVal('cfg-empresa-nome'),
+      cnpj:     getVal('cfg-empresa-cnpj'),
+      endereco: getVal('cfg-empresa-endereco'),
+      tel:      getVal('cfg-empresa-tel'),
+    },
+    regional: {
+      fuso:    getVal('cfg-fuso'),
+      dataFmt: getVal('cfg-data-fmt'),
+      idioma:  getVal('cfg-idioma'),
+    },
+    comportamento: {
+      logoutAuto:  getCheck('cfg-logout-auto'),
+      inatividade: getVal('cfg-inatividade'),
+      somAlerta:   getCheck('cfg-som-alerta'),
+    },
+    aparencia: {
+      ...apAtual,          // preserva logoUrl e outros campos já salvos
+      tema:            temaSel,
+      sidebarCollapsed:getCheck('cfg-sidebar-collapsed'),
+      animReduzida:    getCheck('cfg-anim-reduzida'),
+      densidade:       getCheck('cfg-densidade'),
+    },
+    seguranca: {
+      senhaForte:  getCheck('cfg-senha-forte'),
+      senhaExpira: getCheck('cfg-senha-expira'),
+      prazoSenha:  getVal('cfg-prazo-senha'),
+      twofa:       getCheck('cfg-2fa'),
+      tentativas:  getVal('cfg-tentativas'),
+    },
+    notificacoes: {
+      email:    getVal('cfg-email-notif'),
+      cc:       getVal('cfg-email-cc'),
+      negado:   getCheck('cfg-notif-negado'),
+      critico:  getCheck('cfg-notif-critico'),
+      offline:  getCheck('cfg-notif-offline'),
+      relatorio:getCheck('cfg-notif-relatorio'),
+    },
+    integracao: {
+      apiUrl:        getVal('cfg-api-url'),
+      apiPorta:      getVal('cfg-api-porta'),
+      apiUsuario:    getVal('cfg-api-usuario'),
+      syncAuto:      getCheck('cfg-sync-auto'),
+      syncIntervalo: getVal('cfg-sync-intervalo'),
+    },
+    backup: {
+      auto:      getCheck('cfg-backup-auto'),
+      freq:      getVal('cfg-backup-freq'),
+      retencao:  getVal('cfg-backup-retencao'),
+    },
+  };
+
+  let sucesso = true;
+  for (const [chave, valor] of Object.entries(grupos)) {
+    const ok = await salvarChave(chave, valor);
+    if (!ok) { sucesso = false; break; }
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '<i class="ph ph-floppy-disk"></i> Salvar alterações';
+
+  if (sucesso) {
+    aplicarTema(temaSel);
+    await registrarAuditoria({
+      acao:      'editar',
+      modulo:    'configuracoes',
+      tabela:    'configuracoes',
+      descricao: 'Configurações do sistema atualizadas',
+      nivel:     'info',
+    });
+    mostrarToast('Configurações salvas com sucesso!', 'success');
+  } else {
+    mostrarToast('Erro ao salvar configurações.', 'error');
+  }
+}
+
+
+/* =====================================================
+   MODAL OPERADOR — CRIAR / EDITAR
+   ===================================================== */
+
+function initModalOperador() {
+  const overlay   = document.getElementById('modal-operador');
+  const btnNovo   = document.getElementById('btn-novo-operador');
+  const btnFechar = document.getElementById('modal-operador-fechar');
+  const btnCanc   = document.getElementById('btn-operador-cancelar');
+  const btnSalvar = document.getElementById('btn-operador-salvar');
+
+  const abrir = (operador = null) => {
+    document.getElementById('operador-id').value       = operador?.id    || '';
+    document.getElementById('operador-nome').value     = operador?.nome  || '';
+    document.getElementById('operador-email').value    = operador?.email || '';
+    document.getElementById('operador-perfil').value   = operador?.perfil || 'operador';
+    document.getElementById('modal-operador-erro').style.display = 'none';
+
+    // Oculta campo senha ao editar
+    const senhaGrupo = document.getElementById('operador-senha-grupo');
+    if (senhaGrupo) senhaGrupo.style.display = operador ? 'none' : '';
+    document.getElementById('operador-senha').value = '';
+
+    const titulo = document.getElementById('modal-operador-titulo');
+    titulo.innerHTML = operador
+      ? '<i class="ph ph-pencil-simple"></i> Editar operador'
+      : '<i class="ph ph-user-plus"></i> Novo operador';
+
+    overlay.classList.remove('cfg-hidden');
+    document.body.style.overflow = 'hidden';
+  };
+
+  const fechar = () => {
+    overlay.classList.add('cfg-hidden');
+    document.body.style.overflow = '';
+  };
+
+  btnNovo?.addEventListener('click',   () => abrir());
+  btnFechar?.addEventListener('click', fechar);
+  btnCanc?.addEventListener('click',   fechar);
+  overlay?.addEventListener('click', e => { if (e.target === overlay) fechar(); });
+
+  btnSalvar?.addEventListener('click', async () => {
+    const id     = document.getElementById('operador-id').value;
+    const nome   = document.getElementById('operador-nome').value.trim();
+    const email  = document.getElementById('operador-email').value.trim();
+    const perfil = document.getElementById('operador-perfil').value;
+    const senha  = document.getElementById('operador-senha').value;
+    const erro   = document.getElementById('modal-operador-erro');
+
+    if (!nome || !email) {
+      erro.textContent   = 'Nome e e-mail são obrigatórios.';
+      erro.style.display = 'block';
+      return;
+    }
+    if (!id && senha.length < 8) {
+      erro.textContent   = 'A senha deve ter no mínimo 8 caracteres.';
+      erro.style.display = 'block';
+      return;
+    }
+
+    const supabase = window.getSupabase();
+    let dbError;
+
+    if (id) {
+      // Editar
+      const { error } = await supabase
+        .from('usuarios')
+        .update({ nome, perfil })
+        .eq('id', id);
+      dbError = error;
+    } else {
+      // Criar via Supabase Auth — requer service_role em Edge Function
+      // Por ora insere direto na tabela usuarios (usuário já deve existir no Auth)
+      const { error } = await supabase
+        .from('usuarios')
+        .insert({ nome, email, perfil, ativo: true });
+      dbError = error;
+    }
+
+    if (dbError) {
+      erro.textContent   = 'Erro: ' + dbError.message;
+      erro.style.display = 'block';
+      return;
+    }
+
+    await registrarAuditoria({
+      acao:      id ? 'editar' : 'criar',
+      modulo:    'usuarios',
+      tabela:    'usuarios',
+      descricao: `${id ? 'Operador editado' : 'Novo operador cadastrado'}: ${nome} (${email}) — perfil: ${perfil}`,
+      nivel:     'aviso',
+    });
+
+    fechar();
+    carregarOperadores();
+    mostrarToast(id ? 'Operador atualizado!' : 'Operador cadastrado!', 'success');
+  });
+
+  // Expõe para renderLinhaOperador usar
+  window._abrirModalOperador = abrir;
+}
+
+
+/* =====================================================
+   OPERADORES — LISTAR / REMOVER
+   ===================================================== */
+
+async function carregarOperadores() {
+  const supabase = window.getSupabase();
+  if (!supabase) return;
+  const tbody    = document.getElementById('cfg-usuarios-tbody');
+  const empty    = document.getElementById('cfg-usuarios-empty');
+  const wrap     = document.getElementById('cfg-usuarios-table-wrap');
+
+  const { data, error } = await supabase
+    .from('usuarios')
+    .select('id, nome, email, perfil, ativo, ultimo_login')
+    .order('created_at', { ascending: false });
+
+  if (error || !data || !data.length) {
+    empty?.classList.remove('cfg-hidden');
+    wrap?.classList.add('cfg-hidden');
+    return;
+  }
+
+  empty?.classList.add('cfg-hidden');
+  wrap?.classList.remove('cfg-hidden');
+  tbody.innerHTML = '';
+  data.forEach(op => renderLinhaOperador(op));
+}
+
 function renderLinhaOperador(op) {
   const tbody = document.getElementById('cfg-usuarios-tbody');
   if (!tbody) return;
 
-  const statusBadge = op.ativo
-    ? '<span class="badge badge-success">Ativo</span>'
-    : '<span class="badge badge-neutral">Inativo</span>';
+  const perfilLabel = { admin: 'Administrador', operador: 'Operador', visualizador: 'Visualizador' };
+  const perfilBadge = { admin: 'badge-danger',  operador: 'badge-warning', visualizador: 'badge-neutral' };
 
   const tr = document.createElement('tr');
   tr.innerHTML = `
     <td>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <div style="width:30px;height:30px;border-radius:50%;background:var(--primary);
-          color:#fff;display:flex;align-items:center;justify-content:center;
-          font-size:0.7rem;font-weight:700;flex-shrink:0;">
-          ${iniciais(op.nome || '?')}
+      <div style="display:flex;align-items:center;gap:.6rem;">
+        <div style="width:32px;height:32px;border-radius:50%;background:var(--primary);
+          display:flex;align-items:center;justify-content:center;
+          font-size:.72rem;font-weight:700;color:#fff;flex-shrink:0;">
+          ${iniciais(op.nome)}
         </div>
-        <div>
-          <div style="font-weight:600;font-size:0.85rem;">${op.nome || '—'}</div>
-          <div class="text-sm text-muted">${op.perfil || '—'}</div>
-        </div>
+        <span>${op.nome || '—'}</span>
       </div>
     </td>
     <td class="text-sm text-muted">${op.email || '—'}</td>
-    <td><span class="badge badge-info">${op.perfil || '—'}</span></td>
-    <td class="text-sm text-muted">${op.ultimoAcesso || '—'}</td>
-    <td>${statusBadge}</td>
+    <td><span class="badge ${perfilBadge[op.perfil] || 'badge-neutral'}">
+      ${perfilLabel[op.perfil] || op.perfil || '—'}
+    </span></td>
+    <td class="text-sm text-muted">
+      ${op.ultimo_login ? new Date(op.ultimo_login).toLocaleString('pt-BR') : 'Nunca'}
+    </td>
     <td>
-      <div style="display:flex;gap:4px;">
-        <button class="btn btn-ghost btn-sm btn-icon" title="Editar"
-          onclick="editarOperador('${op.id}')">
+      <span class="badge ${op.ativo ? 'badge-success' : 'badge-neutral'}">
+        ${op.ativo ? 'Ativo' : 'Inativo'}
+      </span>
+    </td>
+    <td>
+      <div style="display:flex;gap:.35rem;">
+        <button class="btn btn-ghost btn-sm" title="Editar"
+          onclick="window._abrirModalOperador(${JSON.stringify(op).replace(/"/g, '&quot;')})">
           <i class="ph ph-pencil-simple"></i>
         </button>
-        <button class="btn btn-danger btn-sm btn-icon" title="Remover"
-          onclick="removerOperador('${op.id}')">
-          <i class="ph ph-trash"></i>
+        <button class="btn btn-ghost btn-sm" title="${op.ativo ? 'Desativar' : 'Ativar'}"
+          onclick="alternarOperador('${op.id}', ${!op.ativo})">
+          <i class="ph ph-${op.ativo ? 'prohibit' : 'check-circle'}"></i>
         </button>
       </div>
     </td>
@@ -509,41 +765,101 @@ function renderLinhaOperador(op) {
   tbody.appendChild(tr);
 }
 
-function mostrarTabelaOperadores() {
-  document.getElementById('cfg-usuarios-empty')?.classList.add('cfg-hidden');
-  document.getElementById('cfg-usuarios-table-wrap')?.classList.remove('cfg-hidden');
+window.alternarOperador = async function (id, novoStatus) {
+  const supabase = window.getSupabase();
+  await supabase.from('usuarios').update({ ativo: novoStatus }).eq('id', id);
+  await registrarAuditoria({
+    acao:      'editar',
+    modulo:    'usuarios',
+    tabela:    'usuarios',
+    descricao: `Operador ${novoStatus ? 'ativado' : 'desativado'} (id: ${id})`,
+    nivel:     'aviso',
+  });
+  carregarOperadores();
+};
+
+
+/* =====================================================
+   HELPERS SUPABASE
+   ===================================================== */
+
+async function lerChave(chave) {
+  const supabase = window.getSupabase();
+  const { data } = await supabase
+    .from('configuracoes')
+    .select('valor')
+    .eq('chave', chave)
+    .maybeSingle();
+  return data?.valor ?? null;
 }
 
-function editarOperador(id) {
-  console.log('Editar operador:', id);
-}
-
-function removerOperador(id) {
-  const ok = confirm('Deseja remover este operador do sistema?');
-  if (!ok) return;
-  console.log('Remover operador:', id);
+async function salvarChave(chave, valor) {
+  const supabase = window.getSupabase();
+  const { error } = await supabase
+    .from('configuracoes')
+    .upsert({ chave, valor, updated_at: new Date().toISOString() }, { onConflict: 'chave' });
+  return !error;
 }
 
 
 /* =====================================================
-   UTILITÁRIOS INTERNOS
+   TOAST — FEEDBACK VISUAL
    ===================================================== */
 
-function setValue(id, valor) {
-  const el = document.getElementById(id);
-  if (el && valor !== undefined && valor !== null) el.value = valor;
+function mostrarToast(msg, tipo = 'success') {
+  const cores  = { success: 'var(--success)', error: 'var(--danger)', info: 'var(--primary)' };
+  const icones = { success: 'ph-check-circle', error: 'ph-x-circle', info: 'ph-info' };
+
+  const toast = document.createElement('div');
+  toast.style.cssText = `
+    position:fixed;bottom:1.5rem;right:1.5rem;z-index:9999;
+    background:var(--surface);border:1px solid var(--border);
+    border-left:3px solid ${cores[tipo]};
+    border-radius:var(--radius-md,8px);
+    padding:.75rem 1.25rem;
+    display:flex;align-items:center;gap:.6rem;
+    box-shadow:var(--shadow-md);
+    font-size:.875rem;color:var(--text-primary);
+    animation:slideInToast .25s ease;
+  `;
+  toast.innerHTML = `<i class="ph ${icones[tipo]}" style="color:${cores[tipo]};font-size:1.1rem;"></i>${msg}`;
+
+  if (!document.getElementById('toast-style')) {
+    const s = document.createElement('style');
+    s.id = 'toast-style';
+    s.textContent = `@keyframes slideInToast{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}`;
+    document.head.appendChild(s);
+  }
+
+  document.body.appendChild(toast);
+  setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity .3s'; }, 2800);
+  setTimeout(() => toast.remove(), 3200);
 }
 
-function setChecked(id, valor) {
+
+/* =====================================================
+   UTILITÁRIOS
+   ===================================================== */
+
+function setVal(id, val) {
   const el = document.getElementById(id);
-  if (el) el.checked = !!valor;
+  if (el && val !== undefined && val !== null) el.value = val;
+}
+
+function getVal(id) {
+  return document.getElementById(id)?.value ?? '';
+}
+
+function setCheck(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.checked = !!val;
+}
+
+function getCheck(id) {
+  return document.getElementById(id)?.checked ?? false;
 }
 
 function iniciais(nome) {
-  return nome
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map(p => p[0].toUpperCase())
-    .join('');
+  if (!nome) return '?';
+  return nome.split(' ').filter(Boolean).slice(0, 2).map(p => p[0].toUpperCase()).join('');
 }

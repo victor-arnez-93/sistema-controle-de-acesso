@@ -16,25 +16,28 @@
 
   <main class="main-content">
 
-    <!-- Cabeçalho -->
-    <div class="page-header">
-      <div>
-        <h2 class="page-title">Monitoramento</h2>
-        <p class="text-sm text-muted mt-1">Eventos ao vivo — atualização em tempo real</p>
-      </div>
-      <div class="flex gap-2">
-        <div class="monitor-status-badge" id="ws-status">
-          <span class="monitor-pulse"></span>
-          <span id="ws-label">Conectado</span>
-        </div>
-        <button class="btn btn-ghost btn-sm" id="btn-pausar">
-          <i class="ph ph-pause"></i> Pausar
-        </button>
-        <button class="btn btn-primary btn-sm">
-          <i class="ph ph-funnel"></i> Filtros
-        </button>
-      </div>
+<!-- Cabeçalho -->
+<div class="page-header">
+  <div>
+    <h2 class="page-title">Monitoramento</h2>
+    <p class="text-sm text-muted mt-1">Eventos ao vivo — atualização em tempo real</p>
+    <p class="text-sm text-muted mt-1">
+      Acompanhe em tempo real todas as entradas e saídas registradas pelos equipamentos de acesso.
+    </p>
+  </div>
+  <div class="flex gap-2">
+    <div class="monitor-status-badge" id="ws-status">
+      <span class="monitor-pulse"></span>
+      <span id="ws-label">Conectado</span>
     </div>
+    <button class="btn btn-ghost btn-sm" id="btn-pausar">
+      <i class="ph ph-pause"></i> Pausar
+    </button>
+    <button class="btn btn-primary btn-sm">
+      <i class="ph ph-funnel"></i> Filtros
+    </button>
+  </div>
+</div>
 
     <!-- KPIs rápidos -->
     <div class="kpi-grid monitor-kpis">

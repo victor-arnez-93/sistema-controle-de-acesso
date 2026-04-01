@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="pt-BR" data-theme="light">
+<html lang="pt-BR" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Configurações — CRV Controle de Acesso</title>
-  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
   <link rel="stylesheet" href="static/css/main.css">
   <link rel="stylesheet" href="static/css/configuracoes.css">
 </head>
@@ -16,11 +16,14 @@
 
   <main class="main-content">
 
-    <div class="page-header">
-      <div>
-        <h2 class="page-title">Configurações</h2>
-        <p class="text-sm text-muted mt-1">Preferências gerais do sistema</p>
-      </div>
+<div class="page-header">
+  <div>
+    <h2 class="page-title">Configurações</h2>
+    <p class="text-sm text-muted mt-1">Preferências gerais do sistema</p>
+    <p class="text-sm text-muted mt-1">
+      Personalize o sistema, gerencie usuários, integrações, segurança e backup.
+    </p>
+  </div>
       <div class="page-actions">
         <button class="btn btn-ghost btn-sm" id="btn-cfg-restaurar">
           <i class="ph ph-arrow-counter-clockwise"></i> Restaurar padrões
@@ -31,7 +34,6 @@
       </div>
     </div>
 
-    <!-- Layout: menu lateral + conteúdo -->
     <div class="cfg-layout">
 
       <!-- Menu lateral -->
@@ -49,7 +51,7 @@
           </button>
 
           <button class="cfg-nav-item" data-secao="seguranca">
-            <i class="ph ph-shield-lock"></i>
+            <i class="ph ph-shield-check"></i>
             <span>Segurança</span>
           </button>
 
@@ -83,7 +85,7 @@
         </div>
       </nav>
 
-      <!-- Conteúdo das seções -->
+      <!-- Conteúdo -->
       <div class="cfg-conteudo">
 
         <!-- ==================== GERAL ==================== -->
@@ -171,10 +173,10 @@
                   <div class="cfg-toggle-desc">Minutos até o logout automático</div>
                 </div>
                 <select class="form-control" style="width:120px;" id="cfg-inatividade">
-                  <option>15 min</option>
-                  <option selected>30 min</option>
-                  <option>60 min</option>
-                  <option>120 min</option>
+                  <option value="15">15 min</option>
+                  <option value="30" selected>30 min</option>
+                  <option value="60">60 min</option>
+                  <option value="120">120 min</option>
                 </select>
               </div>
 
@@ -201,11 +203,45 @@
             <i class="ph ph-paint-brush"></i> Aparência
           </div>
 
+          <!-- LOGO DA EMPRESA -->
+          <div class="cfg-card">
+            <div class="cfg-card-titulo">Logo da empresa</div>
+            <p class="text-sm text-muted mb-3">
+              O logo será exibido no cabeçalho do sistema.
+              Formatos aceitos: PNG, JPG, SVG. Tamanho máximo: 2MB.
+            </p>
+            <div class="cfg-logo-area">
+              <div class="cfg-logo-preview" id="cfg-logo-preview">
+                <img id="cfg-logo-img" src="" alt="Logo da empresa" style="display:none;">
+                <div id="cfg-logo-placeholder">
+                  <i class="ph ph-image-square"></i>
+                  <span>Nenhum logo enviado</span>
+                </div>
+              </div>
+              <div class="cfg-logo-acoes">
+                <label class="btn btn-primary btn-sm cfg-logo-label" for="cfg-logo-input">
+                  <i class="ph ph-upload-simple"></i> Enviar logo
+                </label>
+                <input type="file" id="cfg-logo-input" accept="image/png,image/jpeg,image/svg+xml" style="display:none;">
+                <button class="btn btn-ghost btn-sm" id="btn-remover-logo" style="display:none;">
+                  <i class="ph ph-trash"></i> Remover
+                </button>
+                <div class="cfg-logo-status" id="cfg-logo-status"></div>
+              </div>
+            </div>
+            <div class="cfg-logo-dica text-sm text-muted mt-2">
+              <i class="ph ph-info"></i>
+              Recomendado: imagem com fundo transparente (PNG/SVG), altura mínima de 40px.
+              O logo substituirá o cabeçalho em tempo real após salvar.
+            </div>
+          </div>
+
+          <!-- TEMA -->
           <div class="cfg-card">
             <div class="cfg-card-titulo">Tema</div>
             <div class="cfg-temas-grid">
 
-              <div class="cfg-tema-item active" data-tema="light">
+              <div class="cfg-tema-item" data-tema="light">
                 <div class="cfg-tema-preview cfg-tema-preview-light">
                   <div class="cfg-tema-preview-bar"></div>
                   <div class="cfg-tema-preview-content"></div>
@@ -220,6 +256,7 @@
                 </div>
                 <span>Escuro</span>
               </div>
+
             </div>
           </div>
 
@@ -269,7 +306,7 @@
         <section class="cfg-secao cfg-hidden" id="secao-seguranca">
 
           <div class="cfg-secao-titulo">
-            <i class="ph ph-shield-lock"></i> Segurança
+            <i class="ph ph-shield-check"></i> Segurança
           </div>
 
           <div class="cfg-card">
@@ -304,10 +341,10 @@
                   <div class="cfg-toggle-desc">Dias até obrigar troca de senha</div>
                 </div>
                 <select class="form-control" style="width:140px;" id="cfg-prazo-senha">
-                  <option>30 dias</option>
-                  <option selected>60 dias</option>
-                  <option>90 dias</option>
-                  <option>180 dias</option>
+                  <option value="30">30 dias</option>
+                  <option value="60" selected>60 dias</option>
+                  <option value="90">90 dias</option>
+                  <option value="180">180 dias</option>
                 </select>
               </div>
 
@@ -334,10 +371,10 @@
                   <div class="cfg-toggle-label">Bloquear após tentativas falhas</div>
                   <div class="cfg-toggle-desc">Quantidade de tentativas antes de bloquear o acesso</div>
                 </div>
-                <select class="form-control" style="width:120px;" id="cfg-tentativas">
-                  <option>3 tentativas</option>
-                  <option selected>5 tentativas</option>
-                  <option>10 tentativas</option>
+                <select class="form-control" style="width:140px;" id="cfg-tentativas">
+                  <option value="3">3 tentativas</option>
+                  <option value="5" selected>5 tentativas</option>
+                  <option value="10">10 tentativas</option>
                 </select>
               </div>
 
@@ -481,10 +518,10 @@
                   <div class="cfg-toggle-desc">Frequência de sincronização automática</div>
                 </div>
                 <select class="form-control" style="width:140px;" id="cfg-sync-intervalo">
-                  <option>1 minuto</option>
-                  <option selected>5 minutos</option>
-                  <option>15 minutos</option>
-                  <option>30 minutos</option>
+                  <option value="1">1 minuto</option>
+                  <option value="5" selected>5 minutos</option>
+                  <option value="15">15 minutos</option>
+                  <option value="30">30 minutos</option>
                 </select>
               </div>
 
@@ -512,9 +549,6 @@
               <i class="ph ph-users-three"></i>
               <h3>Nenhum operador cadastrado</h3>
               <p>Adicione usuários que poderão acessar e operar este sistema.</p>
-              <button class="btn btn-primary mt-4">
-                <i class="ph ph-plus"></i> Novo operador
-              </button>
             </div>
 
             <div class="table-wrapper cfg-hidden" id="cfg-usuarios-table-wrap">
@@ -529,12 +563,9 @@
                     <th style="width:100px;">Ações</th>
                   </tr>
                 </thead>
-                <tbody id="cfg-usuarios-tbody">
-                  <!-- injetado via backend -->
-                </tbody>
+                <tbody id="cfg-usuarios-tbody"></tbody>
               </table>
             </div>
-
           </div>
 
         </section>
@@ -567,10 +598,10 @@
                   <div class="cfg-toggle-desc">Intervalo entre backups automáticos</div>
                 </div>
                 <select class="form-control" style="width:140px;" id="cfg-backup-freq">
-                  <option>A cada hora</option>
-                  <option selected>Diário</option>
-                  <option>Semanal</option>
-                  <option>Mensal</option>
+                  <option value="hora">A cada hora</option>
+                  <option value="diario" selected>Diário</option>
+                  <option value="semanal">Semanal</option>
+                  <option value="mensal">Mensal</option>
                 </select>
               </div>
 
@@ -580,10 +611,10 @@
                   <div class="cfg-toggle-desc">Período de armazenamento antes de excluir automaticamente</div>
                 </div>
                 <select class="form-control" style="width:140px;" id="cfg-backup-retencao">
-                  <option>7 dias</option>
-                  <option selected>30 dias</option>
-                  <option>90 dias</option>
-                  <option>1 ano</option>
+                  <option value="7">7 dias</option>
+                  <option value="30" selected>30 dias</option>
+                  <option value="90">90 dias</option>
+                  <option value="365">1 ano</option>
                 </select>
               </div>
 
@@ -667,7 +698,7 @@
               </div>
               <div class="cfg-sysinfo-row">
                 <span class="cfg-sysinfo-label">Banco de dados</span>
-                <span class="cfg-sysinfo-valor" id="cfg-db-info">—</span>
+                <span class="cfg-sysinfo-valor" id="cfg-db-info">Supabase (PostgreSQL)</span>
               </div>
               <div class="cfg-sysinfo-row">
                 <span class="cfg-sysinfo-label">Último backup</span>
@@ -688,7 +719,66 @@
   </main>
 </div>
 
+<!-- MODAL: NOVO / EDITAR OPERADOR -->
+<div class="modal-overlay cfg-hidden" id="modal-operador">
+  <div class="modal">
+
+    <div class="modal-header">
+      <h3 class="modal-title" id="modal-operador-titulo">
+        <i class="ph ph-user-plus"></i> Novo operador
+      </h3>
+      <button class="modal-close" id="modal-operador-fechar">
+        <i class="ph ph-x"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <input type="hidden" id="operador-id">
+      <div class="form-group">
+        <label class="form-label">Nome completo <span style="color:var(--danger)">*</span></label>
+        <input type="text" class="form-control" id="operador-nome" placeholder="Ex: João Silva">
+      </div>
+      <div class="form-group">
+        <label class="form-label">E-mail <span style="color:var(--danger)">*</span></label>
+        <input type="email" class="form-control" id="operador-email" placeholder="joao@empresa.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Perfil de acesso</label>
+        <select class="form-control" id="operador-perfil">
+          <option value="admin">Administrador — acesso total</option>
+          <option value="operador" selected>Operador — operações sem configurações</option>
+          <option value="visualizador">Visualizador — somente leitura</option>
+        </select>
+      </div>
+      <div class="form-group" id="operador-senha-grupo">
+        <label class="form-label">Senha provisória <span style="color:var(--danger)">*</span></label>
+        <input type="password" class="form-control" id="operador-senha" placeholder="Mínimo 8 caracteres">
+        <span class="text-sm text-muted mt-1" style="display:block;">
+          O usuário deverá trocar a senha no primeiro acesso.
+        </span>
+      </div>
+      <div id="modal-operador-erro" style="display:none;color:var(--danger);font-size:.85rem;margin-top:.5rem;"></div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="btn-operador-cancelar">Cancelar</button>
+      <button class="btn btn-primary" id="btn-operador-salvar">
+        <i class="ph ph-floppy-disk"></i> Salvar operador
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- 1. Lib CDN do Supabase — DEVE vir primeiro -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- 2. Seus scripts na ordem correta -->
+<script src="static/js/core/supabase.js"></script>
+<script src="static/js/core/session.js"></script>
+<script src="static/js/core/auditoria.js"></script>
 <script src="static/js/main.js"></script>
 <script src="static/js/configuracoes.js"></script>
+
 </body>
 </html>

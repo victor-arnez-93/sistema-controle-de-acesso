@@ -17,61 +17,64 @@
 
   <main class="main-content">
 
-    <div class="page-header">
-      <div>
-        <h2 class="page-title">Ocorrências</h2>
-        <p class="text-sm text-muted mt-1">Registro e acompanhamento de eventos críticos</p>
-      </div>
-      <div class="page-actions">
-        <button class="btn btn-ghost btn-sm">
-          <i class="ph ph-download-simple"></i> Exportar
-        </button>
-        <button class="btn btn-primary btn-sm" id="btn-nova-ocorr">
-          <i class="ph ph-plus"></i> Nova Ocorrência
-        </button>
-      </div>
+<div class="page-header">
+  <div>
+    <h2 class="page-title">Ocorrências</h2>
+    <p class="text-sm text-muted mt-1">Registro e acompanhamento de eventos críticos</p>
+    <p class="text-sm text-muted mt-1">
+      Registre, classifique e acompanhe a resolução de incidentes e eventos de segurança.
+    </p>
+  </div>
+  <div class="page-actions">
+    <button class="btn btn-ghost btn-sm">
+      <i class="ph ph-download-simple"></i> Exportar
+    </button>
+    <button class="btn btn-primary btn-sm" id="btn-nova-ocorr">
+      <i class="ph ph-plus"></i> Nova Ocorrência
+    </button>
+  </div>
+</div>
+
+<!-- KPIs -->
+<div class="kpi-grid">
+
+  <div class="kpi-card" style="border-top:3px solid var(--info);">
+    <div class="flex items-center justify-between">
+      <span class="kpi-label">Abertas</span>
+      <i class="ph ph-warning-circle kpi-icon" style="color:var(--info);"></i>
     </div>
+    <div class="kpi-value">—</div>
+    <div class="kpi-sub">aguardando ação</div>
+  </div>
 
-    <!-- KPIs -->
-    <div class="kpi-grid">
-
-      <div class="kpi-card">
-        <div class="flex items-center justify-between">
-          <span class="kpi-label">Abertas</span>
-          <i class="ph ph-warning-circle kpi-icon" style="color:var(--danger);"></i>
-        </div>
-        <div class="kpi-value">—</div>
-        <div class="kpi-sub">aguardando ação</div>
-      </div>
-
-      <div class="kpi-card">
-        <div class="flex items-center justify-between">
-          <span class="kpi-label">Em análise</span>
-          <i class="ph ph-magnifying-glass kpi-icon" style="color:var(--warning);"></i>
-        </div>
-        <div class="kpi-value">—</div>
-        <div class="kpi-sub">sendo investigadas</div>
-      </div>
-
-      <div class="kpi-card">
-        <div class="flex items-center justify-between">
-          <span class="kpi-label">Resolvidas hoje</span>
-          <i class="ph ph-check-circle kpi-icon" style="color:var(--success);"></i>
-        </div>
-        <div class="kpi-value">—</div>
-        <div class="kpi-sub">encerradas no dia</div>
-      </div>
-
-      <div class="kpi-card">
-        <div class="flex items-center justify-between">
-          <span class="kpi-label">Críticas</span>
-          <i class="ph ph-fire kpi-icon" style="color:var(--danger);"></i>
-        </div>
-        <div class="kpi-value">—</div>
-        <div class="kpi-sub">prioridade máxima</div>
-      </div>
-
+  <div class="kpi-card" style="border-top:3px solid var(--warning);">
+    <div class="flex items-center justify-between">
+      <span class="kpi-label">Em análise</span>
+      <i class="ph ph-magnifying-glass kpi-icon" style="color:var(--warning);"></i>
     </div>
+    <div class="kpi-value">—</div>
+    <div class="kpi-sub">sendo investigadas</div>
+  </div>
+
+  <div class="kpi-card" style="border-top:3px solid var(--success);">
+    <div class="flex items-center justify-between">
+      <span class="kpi-label">Resolvidas hoje</span>
+      <i class="ph ph-check-circle kpi-icon" style="color:var(--success);"></i>
+    </div>
+    <div class="kpi-value">—</div>
+    <div class="kpi-sub">encerradas no dia</div>
+  </div>
+
+  <div class="kpi-card" style="border-top:3px solid var(--danger);">
+    <div class="flex items-center justify-between">
+      <span class="kpi-label">Críticas</span>
+      <i class="ph ph-fire kpi-icon" style="color:var(--danger);"></i>
+    </div>
+    <div class="kpi-value">—</div>
+    <div class="kpi-sub">prioridade máxima</div>
+  </div>
+
+</div>
 
     <!-- Abas -->
     <div class="ocorr-tabs">

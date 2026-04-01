@@ -17,63 +17,68 @@
 
   <main class="main-content">
 
-    <!-- Cabeçalho -->
-    <div class="page-header">
-      <div>
-        <h2 class="page-title">Funcionários</h2>
-        <p class="text-sm text-muted mt-1">Cadastro e gestão de colaboradores</p>
-      </div>
-      <div class="page-actions">
-        <button class="btn btn-ghost btn-sm" id="btn-importar">
-          <i class="ph ph-upload-simple"></i> Importar
-        </button>
-        <button class="btn btn-ghost btn-sm" id="btn-exportar">
-          <i class="ph ph-download-simple"></i> Exportar
-        </button>
-        <button class="btn btn-primary btn-sm" id="btn-novo">
-          <i class="ph ph-plus"></i> Novo Funcionário
-        </button>
-      </div>
+<!-- Cabeçalho -->
+<div class="page-header">
+  <div>
+    <h2 class="page-title">Funcionários</h2>
+    <p class="text-sm text-muted mt-1">Cadastro e gestão de colaboradores</p>
+    <p class="text-sm text-muted mt-1">
+      Gerencie o cadastro, permissões e status de acesso de todos os colaboradores.
+    </p>
+  </div>
+  <div class="page-actions">
+    <button class="btn btn-ghost btn-sm" id="btn-importar">
+      <i class="ph ph-upload-simple"></i> Importar
+    </button>
+    <button class="btn btn-ghost btn-sm" id="btn-exportar">
+      <i class="ph ph-download-simple"></i> Exportar
+    </button>
+    <button class="btn btn-primary btn-sm" id="btn-novo">
+      <i class="ph ph-plus"></i> Novo Funcionário
+    </button>
+  </div>
+</div>
+
+<!-- KPIs -->
+<div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:20px;">
+
+  <div class="kpi-card" style="border-top:3px solid var(--primary);">
+    <div class="flex items-center justify-between">
+      <span class="kpi-label">Total</span>
+      <i class="ph ph-users kpi-icon" style="color:var(--primary);"></i>
     </div>
-
-    <!-- KPIs -->
-    <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:20px;">
-      <div class="kpi-card">
-  <div class="flex items-center justify-between">
-    <span class="kpi-label">Total</span>
-    <i class="ph ph-users kpi-icon" style="color:var(--primary);"></i>
+    <div class="kpi-value" id="kpi-total">0</div>
+    <div class="kpi-sub">funcionários cadastrados</div>
   </div>
-  <div class="kpi-value" id="kpi-total">0</div>
-  <div class="kpi-sub">funcionários cadastrados</div>
-</div>
 
-<div class="kpi-card">
-  <div class="flex items-center justify-between">
-    <span class="kpi-label">Ativos</span>
-    <i class="ph ph-check-circle kpi-icon" style="color:var(--success);"></i>
-  </div>
-  <div class="kpi-value" id="kpi-ativos">0</div>
-  <div class="kpi-sub">com acesso liberado</div>
-</div>
-
-<div class="kpi-card">
-  <div class="flex items-center justify-between">
-    <span class="kpi-label">Inativos</span>
-    <i class="ph ph-x-circle kpi-icon" style="color:var(--danger);"></i>
-  </div>
-  <div class="kpi-value" id="kpi-inativos">0</div>
-  <div class="kpi-sub">acesso bloqueado</div>
-</div>
-
-<div class="kpi-card">
-  <div class="flex items-center justify-between">
-    <span class="kpi-label">Sem biometria</span>
-    <i class="ph ph-fingerprint kpi-icon" style="color:var(--warning);"></i>
-  </div>
-  <div class="kpi-value" id="kpi-biometria">0</div>
-  <div class="kpi-sub">pendentes de cadastro</div>
-</div>
+  <div class="kpi-card" style="border-top:3px solid var(--success);">
+    <div class="flex items-center justify-between">
+      <span class="kpi-label">Ativos</span>
+      <i class="ph ph-check-circle kpi-icon" style="color:var(--success);"></i>
     </div>
+    <div class="kpi-value" id="kpi-ativos">0</div>
+    <div class="kpi-sub">com acesso liberado</div>
+  </div>
+
+  <div class="kpi-card" style="border-top:3px solid var(--danger);">
+    <div class="flex items-center justify-between">
+      <span class="kpi-label">Inativos</span>
+      <i class="ph ph-x-circle kpi-icon" style="color:var(--danger);"></i>
+    </div>
+    <div class="kpi-value" id="kpi-inativos">0</div>
+    <div class="kpi-sub">acesso bloqueado</div>
+  </div>
+
+  <div class="kpi-card" style="border-top:3px solid var(--warning);">
+    <div class="flex items-center justify-between">
+      <span class="kpi-label">Sem biometria</span>
+      <i class="ph ph-fingerprint kpi-icon" style="color:var(--warning);"></i>
+    </div>
+    <div class="kpi-value" id="kpi-biometria">0</div>
+    <div class="kpi-sub">pendentes de cadastro</div>
+  </div>
+
+</div>
 
     <!-- Filtros e busca -->
     <div class="card mb-4">

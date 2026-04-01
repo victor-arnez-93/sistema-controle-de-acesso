@@ -17,57 +17,65 @@
 
   <main class="main-content">
 
-    <!-- HEADER -->
-    <div class="page-header">
-      <div>
-        <h2 class="page-title">Regras de Acesso</h2>
-        <p class="text-sm text-muted mt-1">Horários, grupos e permissões por área</p>
-      </div>
-      <div class="page-actions" style="display:flex;gap:8px;align-items:center;">
-        <button class="btn btn-ghost btn-sm" id="btn-exportar">
-          <i class="ph ph-download-simple"></i> Exportar
-        </button>
-        <button class="btn btn-primary btn-sm" id="btn-nova-regra">
-          <i class="ph ph-plus"></i> Nova Regra
-        </button>
-      </div>
-    </div>
+<!-- HEADER -->
+<div class="page-header">
+  <div>
+    <h2 class="page-title">Regras de Acesso</h2>
+    <p class="text-sm text-muted mt-1">Horários, grupos e permissões por área</p>
+    <p class="text-sm text-muted mt-1">
+      Defina quem pode acessar cada área, em quais horários e com quais restrições.
+    </p>
+  </div>
+  <div class="page-actions" style="display:flex;gap:8px;align-items:center;">
+    <button class="btn btn-ghost btn-sm" id="btn-exportar">
+      <i class="ph ph-download-simple"></i> Exportar
+    </button>
+    <button class="btn btn-primary btn-sm" id="btn-nova-regra">
+      <i class="ph ph-plus"></i> Nova Regra
+    </button>
+  </div>
+</div>
 
-    <!-- KPIs -->
-    <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:20px;">
-      <div class="kpi-card">
-        <div class="flex items-center justify-between">
-          <span class="kpi-label">Regras ativas</span>
-          <i class="ph ph-shield-check kpi-icon" style="color:var(--success);"></i>
-        </div>
-        <div class="kpi-value" id="kpi-regras">0</div>
-        <div class="kpi-sub">em vigor</div>
-      </div>
-      <div class="kpi-card">
-        <div class="flex items-center justify-between">
-          <span class="kpi-label">Grupos</span>
-          <i class="ph ph-users-three kpi-icon" style="color:var(--primary);"></i>
-        </div>
-        <div class="kpi-value" id="kpi-grupos">0</div>
-        <div class="kpi-sub">grupos configurados</div>
-      </div>
-      <div class="kpi-card">
-        <div class="flex items-center justify-between">
-          <span class="kpi-label">Áreas restritas</span>
-          <i class="ph ph-lock kpi-icon" style="color:var(--danger);"></i>
-        </div>
-        <div class="kpi-value" id="kpi-areas">0</div>
-        <div class="kpi-sub">zonas controladas</div>
-      </div>
-      <div class="kpi-card">
-        <div class="flex items-center justify-between">
-          <span class="kpi-label">Faixas de horário</span>
-          <i class="ph ph-clock kpi-icon" style="color:var(--warning);"></i>
-        </div>
-        <div class="kpi-value" id="kpi-horarios">0</div>
-        <div class="kpi-sub">períodos cadastrados</div>
-      </div>
+<!-- KPIs -->
+<div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:20px;">
+
+  <div class="kpi-card" style="border-top:3px solid var(--success);">
+    <div class="flex items-center justify-between">
+      <span class="kpi-label">Regras ativas</span>
+      <i class="ph ph-shield-check kpi-icon" style="color:var(--success);"></i>
     </div>
+    <div class="kpi-value" id="kpi-regras">0</div>
+    <div class="kpi-sub">em vigor</div>
+  </div>
+
+  <div class="kpi-card" style="border-top:3px solid var(--primary);">
+    <div class="flex items-center justify-between">
+      <span class="kpi-label">Grupos</span>
+      <i class="ph ph-users-three kpi-icon" style="color:var(--primary);"></i>
+    </div>
+    <div class="kpi-value" id="kpi-grupos">0</div>
+    <div class="kpi-sub">grupos configurados</div>
+  </div>
+
+  <div class="kpi-card" style="border-top:3px solid var(--danger);">
+    <div class="flex items-center justify-between">
+      <span class="kpi-label">Áreas restritas</span>
+      <i class="ph ph-lock kpi-icon" style="color:var(--danger);"></i>
+    </div>
+    <div class="kpi-value" id="kpi-areas">0</div>
+    <div class="kpi-sub">zonas controladas</div>
+  </div>
+
+  <div class="kpi-card" style="border-top:3px solid var(--warning);">
+    <div class="flex items-center justify-between">
+      <span class="kpi-label">Faixas de horário</span>
+      <i class="ph ph-clock kpi-icon" style="color:var(--warning);"></i>
+    </div>
+    <div class="kpi-value" id="kpi-horarios">0</div>
+    <div class="kpi-sub">períodos cadastrados</div>
+  </div>
+
+</div>
 
     <!-- ABAS -->
     <div class="regra-tabs">
