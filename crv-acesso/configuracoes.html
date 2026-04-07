@@ -721,13 +721,13 @@
 
 <!-- MODAL: NOVO / EDITAR OPERADOR -->
 <div class="modal-overlay cfg-hidden" id="modal-operador">
-  <div class="modal">
+  <div class="modal func-modal">
 
     <div class="modal-header">
-      <h3 class="modal-title" id="modal-operador-titulo">
+      <h3 class="modal-title func-modal-title" id="modal-operador-titulo">
         <i class="ph ph-user-plus"></i> Novo operador
       </h3>
-      <button class="modal-close" id="modal-operador-fechar">
+      <button class="modal-close func-modal-close" id="modal-operador-fechar">
         <i class="ph ph-x"></i>
       </button>
     </div>
@@ -745,9 +745,10 @@
       <div class="form-group">
         <label class="form-label">Perfil de acesso</label>
         <select class="form-control" id="operador-perfil">
-          <option value="admin">Administrador — acesso total</option>
-          <option value="operador" selected>Operador — operações sem configurações</option>
-          <option value="visualizador">Visualizador — somente leitura</option>
+          <option value="admin">Administrador — acesso total ao sistema</option>
+          <option value="gerente">Gerente — sem configurações e auditoria</option>
+          <option value="operador" selected>Operador — funcionários, credenciais e ocorrências</option>
+          <option value="portaria">Portaria — somente monitoramento</option>
         </select>
       </div>
       <div class="form-group" id="operador-senha-grupo">
@@ -770,14 +771,24 @@
   </div>
 </div>
 
-<!-- 1. Lib CDN do Supabase — DEVE vir primeiro -->
+<!-- SUBSTITUIR o bloco de scripts atual por este -->
+
+<!-- 1. CDN Supabase -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<!-- 2. Seus scripts na ordem correta -->
+<!-- CDN Supabase — SEMPRE primeiro -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- Core — ordem obrigatória -->
 <script src="static/js/core/supabase.js"></script>
+<script src="static/js/core/permissoes.js"></script>
 <script src="static/js/core/session.js"></script>
 <script src="static/js/core/auditoria.js"></script>
+
+<!-- Estrutura da página -->
 <script src="static/js/main.js"></script>
+
+<!-- Lógica da tela -->
 <script src="static/js/configuracoes.js"></script>
 
 </body>

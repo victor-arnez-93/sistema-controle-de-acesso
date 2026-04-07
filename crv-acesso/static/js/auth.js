@@ -1,339 +1,226 @@
 /* ==========================================================
-   CRV CONTROLE DE ACESSO
-   AUTH.JS
-   Login local + preparado para Supabase
-   ========================================================== */
-
-/* ==========================================================
-   CONFIGURAÇÕES
+   CRV CONTROLE DE ACESSO — AUTH.JS
    ========================================================== */
 
 const ROTA_DASHBOARD = "dashboard.html";
-const ROTA_LOGIN = "login.html";
+const ROTA_LOGIN     = "login.html";
 
 /* ==========================================================
-   USUÁRIO DE TESTE
+   HELPERS DE UI
    ========================================================== */
 
-const USUARIO_TESTE = {
-    id: "admin-local",
-    email: "admin@sistema.com",
-    senha: "admin123",
-    nome: "Administrador",
-    perfil: "admin"
-};
+function mostrarErro(msg) {
+  const box  = document.getElementById("login-error");
+  const text = document.getElementById("login-error-message");
+  if (!box || !text) { alert(msg); return; }
+  text.textContent = msg;
+  box.style.display = "flex";
+}
+
+function esconderErro() {
+  const box = document.getElementById("login-error");
+  if (box) box.style.display = "none";
+}
+
+function setBtnLoading(loading) {
+  const btn = document.getElementById("btn-login");
+  if (!btn) return;
+  btn.disabled = loading;
+  btn.innerHTML = loading
+    ? '<i class="ph ph-circle-notch"></i> Entrando...'
+    : '<i class="ph ph-sign-in"></i> Entrar';
+}
 
 /* ==========================================================
-   HELPERS
+   SESSÃO LOCAL
    ========================================================== */
 
-function mostrarErro(msg){
+function salvarUsuarioLocal(usuario) {
+  localStorage.setItem("usuario_logado", JSON.stringify(usuario));
+  window.usuarioLogado = usuario;
+}
 
-    const box = document.getElementById("login-error");
-    const text = document.getElementById("login-error-message");
+function limparUsuarioLocal() {
+  localStorage.removeItem("usuario_logado");
+  localStorage.removeItem("lembrar_me");
+  window.usuarioLogado = null;
+}
 
-    if(!box || !text){
-        alert(msg);
-        return;
+/* ==========================================================
+   LOGIN
+   ========================================================== */
+
+async function fazerLogin(email, senha, lembrar) {
+  esconderErro();
+  setBtnLoading(true);
+
+  try {
+    // ── Pega o cliente Supabase (mesmo padrão do resto do sistema)
+    const supabase = window.getSupabase?.();
+
+    if (!supabase) {
+      throw new Error("Cliente Supabase não inicializado. Verifique o supabase.js.");
     }
 
-    text.textContent = msg;
-    box.style.display = "flex";
+    // ── 1. Autenticar no Supabase Auth
+    const { data, error: authError } = await supabase.auth.signInWithPassword({
+      email,
+      password: senha,
+    });
 
+    if (authError) {
+      // Traduz os erros mais comuns para português
+      const erros = {
+        "Invalid login credentials":  "E-mail ou senha inválidos.",
+        "Email not confirmed":         "E-mail ainda não confirmado. Contate o administrador.",
+        "User not found":              "Usuário não encontrado.",
+        "Too many requests":           "Muitas tentativas. Aguarde alguns minutos.",
+      };
+      throw new Error(erros[authError.message] || authError.message);
+    }
+
+    const authUser = data.user;
+    console.log("✅ Auth OK:", authUser.email);
+
+    // ── 2. Buscar perfil na tabela usuarios
+    //    O id da tabela usuarios É o mesmo UUID do auth.users (sem coluna auth_id separada)
+    const { data: perfil, error: perfilError } = await supabase
+      .from("usuarios")
+      .select("id, nome, perfil, ativo")
+      .eq("id", authUser.id)   // ← corrigido: id direto, não auth_id
+      .maybeSingle();
+
+    if (perfilError) {
+      throw new Error("Erro ao buscar perfil: " + perfilError.message);
+    }
+
+    if (!perfil) {
+      // Auth existe mas tabela não tem o registro — admin precisa cadastrar
+      await supabase.auth.signOut();
+      throw new Error("Usuário autenticado mas sem perfil no sistema. Contate o administrador.");
+    }
+
+    if (!perfil.ativo) {
+      await supabase.auth.signOut();
+      throw new Error("Usuário desativado. Contate o administrador.");
+    }
+
+    // ── 3. Salvar sessão e redirecionar
+    const usuario = {
+      id:     perfil.id,
+      email:  authUser.email,
+      nome:   perfil.nome,
+      perfil: perfil.perfil,
+    };
+
+    salvarUsuarioLocal(usuario);
+    if (lembrar) localStorage.setItem("lembrar_me", "true");
+
+    // Atualiza ultimo_login na tabela (fire-and-forget)
+    supabase
+      .from("usuarios")
+      .update({ ultimo_login: new Date().toISOString() })
+      .eq("id", perfil.id)
+      .then(() => {});
+
+    console.log("✅ Login completo:", usuario.nome, `(${usuario.perfil})`);
+    window.location.href = ROTA_DASHBOARD;
+
+  } catch (err) {
+    console.error("❌ Erro login:", err.message);
+    mostrarErro(err.message || "Erro ao fazer login.");
+  } finally {
+    setBtnLoading(false);
+  }
 }
 
-function esconderErro(){
+/* ==========================================================
+   LOGOUT
+   ========================================================== */
 
-    const box = document.getElementById("login-error");
-
-    if(box) box.style.display = "none";
-
+async function fazerLogout() {
+  try {
+    const supabase = window.getSupabase?.();
+    if (supabase) await supabase.auth.signOut();
+  } catch (e) {
+    console.warn("Erro ao encerrar sessão Supabase:", e);
+  } finally {
+    limparUsuarioLocal();
+    window.location.href = ROTA_LOGIN;
+  }
 }
 
-function salvarUsuarioLocal(usuario){
+/* ==========================================================
+   PROTEGER PÁGINAS
+   ========================================================== */
 
-    localStorage.setItem(
-        "usuario_logado",
-        JSON.stringify(usuario)
-    );
-
+function protegerPagina() {
+  const raw = localStorage.getItem("usuario_logado");
+  if (!raw) {
+    window.location.href = ROTA_LOGIN;
+    return null;
+  }
+  try {
+    const usuario = JSON.parse(raw);
     window.usuarioLogado = usuario;
-
-}
-
-function limparUsuarioLocal(){
-
-    localStorage.removeItem("usuario_logado");
-
-}
-
-/* ==========================================================
-   LOGIN LOCAL (TESTE)
-   ========================================================== */
-
-async function fazerLogin(email, senha, lembrar){
-
-    try{
-
-        esconderErro();
-
-        console.log("🔐 Tentando login...");
-
-        /* =====================================
-           TENTAR LOGIN SUPABASE
-        ===================================== */
-
-        if(window.sb){
-
-            try{
-
-                const { data, error } =
-                    await window.sb.auth.signInWithPassword({
-                        email: email,
-                        password: senha
-                    });
-
-                if(!error && data?.user){
-
-                    console.log("✅ Login Supabase OK");
-
-                    /* =====================================
-   BUSCAR PERFIL REAL DO USUÁRIO
-===================================== */
-
-const { data: perfilData, error: perfilError } =
-    await window.sb
-        .from("usuarios")
-        .select("id, nome, perfil")
-        .eq("auth_id", data.user.id)
-        .single();
-
-if(perfilError || !perfilData){
-
-    console.error("Usuário autenticado mas não encontrado na tabela.");
-
-    throw new Error("Usuário não possui permissão no sistema.");
-
-}
-
-const usuario = {
-    id: perfilData.id,
-    auth_id: data.user.id,
-    email: data.user.email,
-    nome: perfilData.nome,
-    perfil: perfilData.perfil
-};
-
-salvarUsuarioLocal(usuario);
-
-                    if(lembrar){
-                        localStorage.setItem("lembrar_me","true");
-                    }
-
-                    window.location.href = ROTA_DASHBOARD;
-
-                    return;
-
-                }
-
-            }catch(e){
-
-                console.warn("Supabase não respondeu, tentando login local");
-
-            }
-
-        }
-
-        /* LOGIN DE TESTE */
-
-        if(
-            email === USUARIO_TESTE.email &&
-            senha === USUARIO_TESTE.senha
-        ){
-
-            const usuario = {
-                id: USUARIO_TESTE.id,
-                email: USUARIO_TESTE.email,
-                nome: USUARIO_TESTE.nome,
-                perfil: USUARIO_TESTE.perfil
-            };
-
-            salvarUsuarioLocal(usuario);
-
-            if(lembrar){
-                localStorage.setItem("lembrar_me","true");
-            }
-
-            console.log("✅ Login local OK");
-
-            window.location.href = ROTA_DASHBOARD;
-
-            return;
-
-        }
-
-        throw new Error("Email ou senha inválidos.");
-
-    }catch(err){
-
-        console.error("❌ Erro login:", err);
-
-        mostrarErro(
-            err.message || "Erro ao fazer login."
-        );
-
-    }
-
-}
-
-/* ==========================================================
-   LOGOUT GLOBAL
-   ========================================================== */
-async function fazerLogout(){
-
-    try{
-
-        console.log("🚪 Fazendo logout...");
-
-        /* ENCERRAR SESSÃO SUPABASE */
-
-        if(window.sb){
-
-            try{
-
-                await window.sb.auth.signOut();
-
-                console.log("✅ Sessão Supabase encerrada");
-
-            }catch(e){
-
-                console.warn("Erro ao encerrar sessão Supabase", e);
-
-            }
-
-        }
-
-        /* LIMPAR SESSÃO LOCAL */
-
-        limparUsuarioLocal();
-
-        /* REDIRECIONAR */
-
-        window.location.href = ROTA_LOGIN;
-
-    }catch(err){
-
-        console.error("Erro no logout:", err);
-
-        limparUsuarioLocal();
-
-        window.location.href = ROTA_LOGIN;
-
-    }
-
-}
-
-/* ==========================================================
-   PROTEGER PÁGINAS (SE NÃO ESTIVER LOGADO)
-   ========================================================== */
-
-function protegerPagina(){
-
-    const usuario = localStorage.getItem("usuario_logado");
-
-    if(!usuario){
-
-        console.warn("⚠️ Usuário não autenticado");
-
-        window.location.href = ROTA_LOGIN;
-
-        return;
-
-    }
-
-    try{
-
-        window.usuarioLogado = JSON.parse(usuario);
-
-    }catch(e){
-
-        console.error("Erro ao ler usuário");
-
-        limparUsuarioLocal();
-
-        window.location.href = ROTA_LOGIN;
-
-    }
-
+    return usuario;
+  } catch {
+    limparUsuarioLocal();
+    window.location.href = ROTA_LOGIN;
+    return null;
+  }
 }
 
 /* ==========================================================
    INICIALIZAÇÃO
    ========================================================== */
 
-document.addEventListener("DOMContentLoaded", ()=>{
+document.addEventListener("DOMContentLoaded", () => {
+  const pagina     = window.location.pathname.split("/").pop();
+  const ehLogin    = pagina === "login.html" || pagina === "";
+  const ehRecupera = pagina === "recuperacao_senha.html";
 
-const paginaAtual =
-    window.location.pathname.split("/").pop();
+  // Páginas públicas — não proteger
+  if (ehLogin || ehRecupera) {
 
-const paginaLogin =
-    paginaAtual === "login.html";
-
-    /* SE NÃO FOR LOGIN -> PROTEGER */
-
-    if(!paginaLogin){
-
-        protegerPagina();
-
-        return;
-
+    // Se já está logado, vai direto pro dashboard
+    if (localStorage.getItem("usuario_logado")) {
+      window.location.href = ROTA_DASHBOARD;
+      return;
     }
-
-    /* LOGIN */
 
     const form = document.getElementById("loginForm");
+    if (!form) return;
 
-    if(!form){
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email   = document.getElementById("email")?.value.trim();
+      const senha   = document.getElementById("senha")?.value;
+      const lembrar = document.getElementById("lembrar-me")?.checked || false;
 
-        console.warn("Form login não encontrado");
-
+      if (!email || !senha) {
+        mostrarErro("Preencha e-mail e senha.");
         return;
+      }
 
-    }
-
-    const usuarioLogado = localStorage.getItem("usuario_logado");
-
-    if(usuarioLogado){
-
-        window.location.href = ROTA_DASHBOARD;
-
-        return;
-
-    }
-
-    form.addEventListener("submit", async (e)=>{
-
-        e.preventDefault();
-
-        const email =
-            document.getElementById("email")?.value.trim();
-
-        const senha =
-            document.getElementById("senha")?.value;
-
-        const lembrar =
-            document.getElementById("lembrar-me")?.checked || false;
-
-        if(!email || !senha){
-
-            mostrarErro("Preencha email e senha.");
-
-            return;
-
-        }
-
-        await fazerLogin(email, senha, lembrar);
-
+      await fazerLogin(email, senha, lembrar);
     });
 
+    return;
+  }
+
+  // Todas as outras páginas — proteger
+// Todas as outras páginas — proteger e verificar permissão
+const usuario = protegerPagina();
+if (usuario) {
+  // Verifica se o perfil tem acesso a esta tela específica
+  window.verificarAcessoTela?.();
+  // Filtra o menu da sidebar pelo perfil
+  // (chamado após a sidebar ser montada pelo main.js)
+  document.addEventListener('sidebar-ready', () => {
+    window.filtrarMenuPorPerfil?.(usuario.perfil);
+  });
+  // Fallback: tenta filtrar após 300ms se o evento não disparar
+  setTimeout(() => window.filtrarMenuPorPerfil?.(usuario.perfil), 300);
+}
 });

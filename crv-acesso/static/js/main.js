@@ -45,7 +45,9 @@ async function loadPartials() {
     console.warn('Erro ao carregar partials:', e);
   }
 
-  await aplicarLogoSalvo();
+await aplicarLogoSalvo();
+window._crvPronto = true;
+document.dispatchEvent(new CustomEvent('crv:pronto'));
 }
 
 async function aplicarLogoSalvo() {
