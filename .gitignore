@@ -1,2 +1,7 @@
+# ambiente
 crv-acesso/.env
-crv-acesso/.env
+
+# arquivos indesejados
+*.exe
+*.zip
+*.rar

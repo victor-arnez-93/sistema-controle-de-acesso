@@ -10,7 +10,13 @@ if (!window._sbClient) {
   if (!window.supabase) {
     console.error("[SUPABASE] Lib CDN não carregada. Verifique o <script> do CDN.");
   } else {
-    window._sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    window._sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true
+  }
+});
     console.log("[SUPABASE] Inicializado");
   }
 }

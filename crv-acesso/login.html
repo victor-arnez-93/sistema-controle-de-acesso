@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR" data-theme="dark">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -79,7 +79,25 @@
     <i class="ph ph-moon" id="theme-icon"></i>
   </button>
 
-  <script src="static/js/login.js"></script>
-  <script src="static/js/auth.js"></script>
+  <script>
+(function () {
+  const tema = localStorage.getItem('crv-theme') || 'light';
+  document.documentElement.setAttribute('data-theme', tema);
+})();
+</script>
+
+
+<!-- SUPABASE LIB (CDN) -->
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+<!-- SUPABASE (OBRIGATÓRIO) -->
+<script src="static/js/core/supabase.js"></script>
+
+<!-- LOGIN -->
+<script src="static/js/login.js"></script>
+
+<!-- AUTH -->
+<script src="static/js/auth.js"></script>
+
 </body>
 </html>

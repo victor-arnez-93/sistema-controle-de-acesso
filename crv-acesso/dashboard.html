@@ -310,12 +310,19 @@
   </main>
 </div>
 
+<!-- CDN Supabase — SEMPRE primeiro -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <!-- CORE -->
 <script src="static/js/core/supabase.js"></script>
 <script src="static/js/core/db.js"></script>
 <script src="static/js/core/network.js"></script>
 <script src="static/js/core/sync.js"></script>
 <script src="static/js/core/api.js"></script>
+<script src="static/js/core/permissoes.js"></script>
+
+<!-- AUTH (OBRIGATÓRIO) -->
+<script src="static/js/auth.js"></script>
 
 <!-- GLOBAL -->
 <script src="static/js/main.js"></script>

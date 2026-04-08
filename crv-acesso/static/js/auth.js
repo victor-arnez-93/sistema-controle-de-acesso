@@ -86,7 +86,7 @@ async function fazerLogin(email, senha, lembrar) {
     //    O id da tabela usuarios É o mesmo UUID do auth.users (sem coluna auth_id separada)
     const { data: perfil, error: perfilError } = await supabase
       .from("usuarios")
-      .select("id, nome, perfil, ativo")
+      .select("id, nome, perfil, ativo, empresa_id")
       .eq("id", authUser.id)   // ← corrigido: id direto, não auth_id
       .maybeSingle();
 
@@ -111,6 +111,7 @@ async function fazerLogin(email, senha, lembrar) {
       email:  authUser.email,
       nome:   perfil.nome,
       perfil: perfil.perfil,
+      empresa_id: perfil.empresa_id
     };
 
     salvarUsuarioLocal(usuario);
@@ -138,7 +139,7 @@ async function fazerLogin(email, senha, lembrar) {
    LOGOUT
    ========================================================== */
 
-async function fazerLogout() {
+window.fazerLogout = async function () {
   try {
     const supabase = window.getSupabase?.();
     if (supabase) await supabase.auth.signOut();
@@ -209,18 +210,30 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  // Todas as outras páginas — proteger
+// Todas as outras páginas — proteger
 // Todas as outras páginas — proteger e verificar permissão
 const usuario = protegerPagina();
+
 if (usuario) {
-  // Verifica se o perfil tem acesso a esta tela específica
+
+// 🔥 EXECUTA IMEDIATO (resolve 90% dos casos)
+window.verificarAcessoTela?.();
+
+// 🔥 E GARANTE pós carregamento (segurança extra)
+document.addEventListener('crv:pronto', () => {
   window.verificarAcessoTela?.();
-  // Filtra o menu da sidebar pelo perfil
-  // (chamado após a sidebar ser montada pelo main.js)
+});
+
+  // 🔥 Filtra menu após sidebar carregar
   document.addEventListener('sidebar-ready', () => {
     window.filtrarMenuPorPerfil?.(usuario.perfil);
   });
-  // Fallback: tenta filtrar após 300ms se o evento não disparar
-  setTimeout(() => window.filtrarMenuPorPerfil?.(usuario.perfil), 300);
+
+  // 🔥 Fallback
+  setTimeout(() => {
+    window.filtrarMenuPorPerfil?.(usuario.perfil);
+  }, 300);
+
 }
+
 });

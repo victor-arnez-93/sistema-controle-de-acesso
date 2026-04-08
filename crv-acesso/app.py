@@ -82,6 +82,39 @@ def criar_usuario():
     if perfil not in ("admin", "gerente", "operador", "portaria"):
         return jsonify({"erro": f"Perfil inválido: {perfil}"}), 400
 
+    # 🔥 IDENTIFICAR USUÁRIO LOGADO
+    auth_header = request.headers.get('Authorization')
+
+    if not auth_header or auth_header == "undefined":
+        return jsonify({'erro': 'Usuário não autenticado'}), 401
+
+    # 🔥 remove "Bearer " se vier
+    user_id = auth_header.replace("Bearer ", "").strip()
+
+    if not user_id:
+        return jsonify({'erro': 'Usuário não autenticado'}), 401
+
+    # 🔥 BUSCAR EMPRESA DO ADMIN
+    user_res = requests.get(
+        f"{SUPABASE_URL}/rest/v1/usuarios?id=eq.{user_id}&select=*",
+        headers=headers_admin(),
+        timeout=10
+    )
+
+    if user_res.status_code != 200:
+        return jsonify({'erro': 'Erro ao buscar usuário'}), 500
+
+    usuarios = user_res.json()
+
+    if not usuarios:
+        return jsonify({'erro': 'Usuário não encontrado'}), 404
+
+    usuario = usuarios[0]
+    empresa_id = usuario.get("empresa_id")
+
+    if not empresa_id:
+        return jsonify({'erro': 'Usuário sem empresa vinculada'}), 400
+
     # 1️⃣ Cria no Supabase Auth
     auth_resp = requests.post(
         f"{SUPABASE_URL}/auth/v1/admin/users",
@@ -116,6 +149,7 @@ def criar_usuario():
             "perfil":          perfil,
             "ativo":           True,
             "primeiro_acesso": True,
+            "empresa_id": empresa_id
         },
         timeout=10,
     )
@@ -311,9 +345,8 @@ def excluir_usuario():
     print(f"[OK] Usuário excluído permanentemente: id={uid}")
     return jsonify({"ok": True}), 200
 
-
 # ════════════════════════════════════════════════════════════════════════════
-#  API — EMPRESA
+#  API — EMPRESA (MULTIEMPRESA REAL)
 # ════════════════════════════════════════════════════════════════════════════
 
 @app.route("/api/empresa", methods=["GET"])
@@ -323,9 +356,42 @@ def obter_empresa():
     Retorna dados da empresa do usuário atual
     """
 
-    # ⚠️ Versão simplificada (depois podemos ligar com session real)
+    # 🔥 IDENTIFICAR USUÁRIO
+    auth_header = request.headers.get('Authorization')
+
+    if not auth_header or auth_header == "undefined":
+        return jsonify({'erro': 'Usuário não autenticado'}), 401
+
+    user_id = auth_header.replace("Bearer ", "").strip()
+
+    if not user_id:
+        return jsonify({'erro': 'Usuário não autenticado'}), 401
+
+    # 🔥 BUSCAR USUÁRIO
+    user_res = requests.get(
+        f"{SUPABASE_URL}/rest/v1/usuarios?id=eq.{user_id}&select=*",
+        headers=headers_admin(),
+        timeout=10
+    )
+
+    if user_res.status_code != 200:
+        print("[ERRO] buscar usuario:", user_res.text)
+        return jsonify({'erro': 'Erro ao buscar usuário'}), 500
+
+    usuarios = user_res.json()
+
+    if not usuarios:
+        return jsonify({'erro': 'Usuário não encontrado'}), 404
+
+    usuario = usuarios[0]
+    empresa_id = usuario.get('empresa_id')
+
+    if not empresa_id:
+        return jsonify({'erro': 'Usuário sem empresa vinculada'}), 400
+
+    # 🔥 BUSCAR EMPRESA CORRETA
     resp = requests.get(
-        f"{SUPABASE_URL}/rest/v1/empresas?select=*",
+        f"{SUPABASE_URL}/rest/v1/empresas?id=eq.{empresa_id}&select=*",
         headers=headers_admin(),
         timeout=10,
     )
@@ -360,9 +426,42 @@ def atualizar_empresa():
     if not nome:
         return jsonify({"erro": "Nome da empresa é obrigatório"}), 400
 
-    # ⚠️ Versão simples: atualiza primeira empresa
+    # 🔥 IDENTIFICAR USUÁRIO
+    auth_header = request.headers.get('Authorization')
+
+    if not auth_header or auth_header == "undefined":
+        return jsonify({'erro': 'Usuário não autenticado'}), 401
+
+    user_id = auth_header.replace("Bearer ", "").strip()
+
+    if not user_id:
+        return jsonify({'erro': 'Usuário não autenticado'}), 401
+
+    # 🔥 BUSCAR USUÁRIO
+    user_res = requests.get(
+        f"{SUPABASE_URL}/rest/v1/usuarios?id=eq.{user_id}&select=*",
+        headers=headers_admin(),
+        timeout=10
+    )
+
+    if user_res.status_code != 200:
+        print("[ERRO] buscar usuario:", user_res.text)
+        return jsonify({'erro': 'Erro ao buscar usuário'}), 500
+
+    usuarios = user_res.json()
+
+    if not usuarios:
+        return jsonify({'erro': 'Usuário não encontrado'}), 404
+
+    usuario = usuarios[0]
+    empresa_id = usuario.get('empresa_id')
+
+    if not empresa_id:
+        return jsonify({'erro': 'Usuário sem empresa vinculada'}), 400
+
+    # 🔥 ATUALIZAR EMPRESA CORRETA
     resp = requests.patch(
-        f"{SUPABASE_URL}/rest/v1/empresas?id=not.is.null",
+        f"{SUPABASE_URL}/rest/v1/empresas?id=eq.{empresa_id}",
         headers={**headers_admin(), "Prefer": "return=minimal"},
         json={
             "nome": nome,
@@ -373,11 +472,12 @@ def atualizar_empresa():
         timeout=10,
     )
 
-    if resp.status_code not in (200, 204):
+    # 🔥 VALIDAÇÃO FINAL
+    if resp.status_code not in (200, 201, 204):
         print("[ERRO] atualizar_empresa:", resp.text)
-        return jsonify({"erro": "Erro ao atualizar empresa"}), 500
+        return jsonify({"erro": "Erro ao salvar empresa"}), 500
 
-    print(f"[OK] Empresa atualizada: {nome}")
+    print(f"[OK] Empresa salva/atualizada: {nome}")
     return jsonify({"ok": True})
 
 # ════════════════════════════════════════════════════════════════════════════

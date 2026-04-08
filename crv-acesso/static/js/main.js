@@ -72,28 +72,66 @@ async function aplicarLogoSalvo() {
 /* ------------------------------------------------------------
    TEMA CLARO / ESCURO
    ------------------------------------------------------------ */
-function initTheme() {
-  // Lê do Supabase via configuracoes.js — mas como main.js carrega antes,
-  // usa o data-theme já setado no <html> como fallback inicial.
-  // O configuracoes.js aplica o tema correto quando a página carrega.
-  const atual = document.documentElement.getAttribute('data-theme') || 'dark';
-  aplicarTemaHeader(atual);
+async function initTheme() {
 
+  let tema = 'light'; // padrão do sistema
+
+  // 1. localStorage (prioridade alta)
+  const temaLocal = localStorage.getItem('crv-theme');
+  if (temaLocal) {
+    tema = temaLocal;
+  } else {
+
+    // 2. Supabase (fallback persistente)
+    try {
+      const supabase = window.getSupabase?.();
+      if (supabase) {
+        const { data } = await supabase
+          .from('configuracoes')
+          .select('valor')
+          .eq('chave', 'aparencia')
+          .maybeSingle();
+
+        if (data?.valor?.tema) {
+          tema = data.valor.tema;
+        }
+      }
+    } catch (e) {
+      console.warn('Erro ao buscar tema:', e);
+    }
+
+  }
+
+  aplicarTemaHeader(tema);
+
+  // clique no botão
   document.addEventListener('click', (e) => {
+
     if (e.target.closest('#theme-toggle')) {
-      const current = document.documentElement.getAttribute('data-theme');
-      const novo    = current === 'dark' ? 'light' : 'dark';
+
+      const atual = document.documentElement.getAttribute('data-theme');
+      const novo  = atual === 'dark' ? 'light' : 'dark';
+
       aplicarTemaHeader(novo);
-      // Persiste no Supabase se getSupabase disponível
+
+      // salva LOCAL (instantâneo)
+      localStorage.setItem('crv-theme', novo);
+
+      // salva no Supabase (persistência real)
       const supabase = window.getSupabase?.();
       if (supabase) {
         supabase.from('configuracoes')
-          .upsert({ chave: 'aparencia', valor: { tema: novo }, updated_at: new Date().toISOString() },
-                  { onConflict: 'chave' })
-          .then(() => {});
+          .upsert({
+            chave: 'aparencia',
+            valor: { tema: novo },
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'chave' });
       }
+
     }
+
   });
+
 }
 
 function aplicarTemaHeader(theme) {
@@ -302,6 +340,20 @@ function abrirModalUsuario(){
 
   if(document.getElementById('user-modal')) return;
 
+  // 🔥 DADOS REAIS DO USUÁRIO
+  const usuario = window.usuarioLogado || {};
+
+  const nome   = usuario.nome   || 'Usuário';
+  const email  = usuario.email  || '-';
+  const perfil = usuario.perfil || '-';
+
+  const perfilLabel = {
+    admin: 'Administrador',
+    gerente: 'Gerente',
+    operador: 'Operador',
+    portaria: 'Portaria'
+  };
+
   const modal = document.createElement('div');
 
   modal.id = 'user-modal';
@@ -322,8 +374,8 @@ function abrirModalUsuario(){
         </div>
 
         <div class="user-modal-info">
-            <div class="user-modal-name">Admin</div>
-            <div class="user-modal-email">admin@sistema.com</div>
+            <div class="user-modal-name">${nome}</div>
+            <div class="user-modal-email">${email}</div>
         </div>
 
     </div>
@@ -333,26 +385,28 @@ function abrirModalUsuario(){
         <div class="user-modal-row">
             <i class="ph ph-calendar"></i>
             <span>Último acesso:</span>
-            <b>12/03/2026 17:26</b>
+            <b>${usuario.ultimo_login
+                ? new Date(usuario.ultimo_login).toLocaleString('pt-BR')
+                : '—'}</b>
         </div>
 
         <div class="user-modal-row">
             <i class="ph ph-user-gear"></i>
             <span>Perfil:</span>
-            <b>Administrador</b>
+            <b>${perfilLabel[perfil] || perfil}</b>
         </div>
 
         <div class="user-modal-row">
             <i class="ph ph-clock"></i>
             <span>Sessão ativa há:</span>
-            <b>30 min</b>
+            <b id="tempo-sessao">Calculando...</b>
         </div>
 
     </div>
 
     <div class="user-modal-actions">
 
-        <button class="btn btn-primary w-full">
+        <button class="btn btn-primary w-full" data-href="configuracoes">
             <i class="ph ph-gear"></i>
             Configurações
         </button>
@@ -379,6 +433,18 @@ function abrirModalUsuario(){
 
   document.body.appendChild(modal);
 
+  // 🔥 TEMPO DE SESSÃO (simples e funcional)
+  try {
+    const loginTime = localStorage.getItem('login_time');
+    if (loginTime) {
+      const diffMin = Math.floor((Date.now() - parseInt(loginTime)) / 60000);
+      const el = document.getElementById('tempo-sessao');
+      if (el) el.textContent = diffMin + ' min';
+    } else {
+      const el = document.getElementById('tempo-sessao');
+      if (el) el.textContent = '—';
+    }
+  } catch {}
 }
 
 /* ------------------------------------------------------------
@@ -470,7 +536,32 @@ document.addEventListener('click',(e)=>{
   }
 
   if(e.target.closest('#confirmar-logout')){
-      window.location.href = "login.html";
+    window.fazerLogout();
   }
 
 });
+
+/* ------------------------------------------------------------
+   LOGOUT REAL (SUPABASE)
+------------------------------------------------------------ */
+async function fazerLogout() {
+  try {
+    const sb = window.getSupabase();
+
+    await sb.auth.signOut();
+
+    // 🔥 CRÍTICO — limpa sessão local (ERA O BUG)
+    localStorage.removeItem("usuario_logado");
+    localStorage.removeItem("lembrar_me");
+
+    // opcionais
+    localStorage.removeItem("crv-theme");
+    localStorage.removeItem("crv-sidebar");
+
+    window.location.href = 'login.html';
+
+  } catch (e) {
+    console.error('[CRV] erro ao fazer logout:', e);
+    showToast('Erro ao sair do sistema', 'danger');
+  }
+}

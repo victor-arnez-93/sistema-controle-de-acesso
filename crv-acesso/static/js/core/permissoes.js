@@ -75,11 +75,37 @@ function verificarAcessoTela() {
     return false;
   }
 
-  const pagina     = window.location.pathname.split('/').pop().replace('.html', '') || 'dashboard';
+let pagina = window.location.pathname.toLowerCase();
+
+// remove tudo antes da última barra
+pagina = pagina.substring(pagina.lastIndexOf('/') + 1);
+
+// remove extensão
+pagina = pagina.replace('.html', '');
+
+// fallback
+if (!pagina || pagina === '') {
+  pagina = 'dashboard';
+}
+
+console.log('[CRV DEBUG]', {
+  pagina,
+  perfil: usuario.perfil,
+  permitido: TELAS_PERMITIDAS[pagina]
+});
+
   const permitidos = TELAS_PERMITIDAS[pagina];
 
   // Tela não mapeada = acessível a qualquer usuário logado
-  if (!permitidos) return true;
+  if (!permitidos) {
+  console.error('[CRV] Página não mapeada:', pagina);
+
+  // 🔥 BLOQUEIA POR SEGURANÇA
+  const destino = TELA_INICIAL[usuario.perfil] || 'dashboard';
+  window.location.href = destino + '.html';
+
+  return false;
+}
 
   if (!permitidos.includes(usuario.perfil)) {
     console.warn(`[CRV] 🚫 Perfil "${usuario.perfil}" sem acesso à tela "${pagina}"`);
@@ -139,15 +165,13 @@ function protegerPagina(perfilNecessario = null) {
    Oculta itens de menu que o perfil não pode acessar.
    Funciona com atributo [data-href] nos <li> ou <a> do menu.
    ========================================================== */
-
 function filtrarMenuPorPerfil(perfil) {
   if (!perfil) return;
 
-  document.querySelectorAll('[data-href]').forEach(el => {
-    const href  = (el.dataset.href || '').replace('.html', '');
+  document.querySelectorAll('[data-page]').forEach(el => {
+    const href  = (el.dataset.page || '').replace('.html', '');
     const telas = TELAS_PERMITIDAS[href];
 
-    // Item sem tela mapeada = sempre visível
     if (!telas) return;
 
     const visivel = telas.includes(perfil);

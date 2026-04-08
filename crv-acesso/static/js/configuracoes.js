@@ -429,69 +429,87 @@ async function carregarConfiguracoes() {
   setVal('cfg-empresa-endereco', emp.endereco);
   setVal('cfg-empresa-tel',      emp.tel);
 
-  // 🔥 2. AGORA: sobrescreve com dados REAIS do backend
-  try {
- const resp = await fetch('/api/empresa');
+// 🔥 2. AGORA: sobrescreve com dados REAIS do backend
+try {
 
-if (!resp.ok) {
-  throw new Error('Erro ao buscar empresa');
+  const sb = window.getSupabase();
+  const { data: sessionData } = await sb.auth.getSession();
+  const session = sessionData?.session;
+
+  if (!session?.user?.id) {
+    console.error('[CRV] sessão inválida');
+    mostrarToast('Sessão inválida, faça login novamente', 'error');
+    return;
+  }
+
+  const resp = await fetch('/api/empresa', {
+    headers: {
+      'Authorization': `Bearer ${session.user.id}`
+    }
+  });
+
+  if (!resp.ok) {
+    throw new Error('Erro ao buscar empresa');
+  }
+
+  const empresa = await resp.json();
+
+  if (empresa && empresa.nome) {
+    setVal('cfg-empresa-nome',     empresa.nome);
+    setVal('cfg-empresa-cnpj',     empresa.cnpj);
+    setVal('cfg-empresa-endereco', empresa.endereco);
+    setVal('cfg-empresa-tel',      empresa.tel);
+  }
+
+} catch (e) {
+  console.warn('[CRV] erro ao carregar empresa real:', e);
 }
 
-const empresa = await resp.json();
+setVal('cfg-fuso',     reg.fuso);
+setVal('cfg-data-fmt', reg.dataFmt);
+setVal('cfg-idioma',   reg.idioma);
 
-    if (empresa && empresa.nome) {
-      setVal('cfg-empresa-nome',     empresa.nome);
-      setVal('cfg-empresa-cnpj',     empresa.cnpj);
-      setVal('cfg-empresa-endereco', empresa.endereco);
-      setVal('cfg-empresa-tel',      empresa.tel);
-    }
-  } catch (e) {
-    console.warn('[CRV] erro ao carregar empresa real:', e);
-  }
+setCheck('cfg-logout-auto', comp.logoutAuto !== false);
+setVal('cfg-inatividade',   comp.inatividade || '30');
+setCheck('cfg-som-alerta',  comp.somAlerta);
 
-  setVal('cfg-fuso',     reg.fuso);
-  setVal('cfg-data-fmt', reg.dataFmt);
-  setVal('cfg-idioma',   reg.idioma);
+if (ap.tema) { aplicarTema(ap.tema); marcarTemaAtivo(ap.tema); }
+setCheck('cfg-sidebar-collapsed', ap.sidebarCollapsed);
+setCheck('cfg-anim-reduzida',     ap.animReduzida);
+setCheck('cfg-densidade',         ap.densidade);
+if (ap.logoUrl) { exibirLogoPreview(ap.logoUrl); aplicarLogoHeader(ap.logoUrl); }
 
-  setCheck('cfg-logout-auto', comp.logoutAuto !== false);
-  setVal('cfg-inatividade',   comp.inatividade || '30');
-  setCheck('cfg-som-alerta',  comp.somAlerta);
+setCheck('cfg-senha-forte',  seg.senhaForte  !== false);
+setCheck('cfg-senha-expira', seg.senhaExpira !== false);
+setVal('cfg-prazo-senha',    seg.prazoSenha  || '60');
+setCheck('cfg-2fa',          seg.twofa);
+setVal('cfg-tentativas',     seg.tentativas  || '5');
 
-  if (ap.tema) { aplicarTema(ap.tema); marcarTemaAtivo(ap.tema); }
-  setCheck('cfg-sidebar-collapsed', ap.sidebarCollapsed);
-  setCheck('cfg-anim-reduzida',     ap.animReduzida);
-  setCheck('cfg-densidade',         ap.densidade);
-  if (ap.logoUrl) { exibirLogoPreview(ap.logoUrl); aplicarLogoHeader(ap.logoUrl); }
+setVal('cfg-email-notif',       nt.email);
+setVal('cfg-email-cc',          nt.cc);
+setCheck('cfg-notif-negado',    nt.negado    !== false);
+setCheck('cfg-notif-critico',   nt.critico   !== false);
+setCheck('cfg-notif-offline',   nt.offline   !== false);
+setCheck('cfg-notif-relatorio', nt.relatorio);
 
-  setCheck('cfg-senha-forte',  seg.senhaForte  !== false);
-  setCheck('cfg-senha-expira', seg.senhaExpira !== false);
-  setVal('cfg-prazo-senha',    seg.prazoSenha  || '60');
-  setCheck('cfg-2fa',          seg.twofa);
-  setVal('cfg-tentativas',     seg.tentativas  || '5');
+setVal('cfg-api-url',        intg.apiUrl);
+setVal('cfg-api-porta',      intg.apiPorta);
+setVal('cfg-api-usuario',    intg.apiUsuario);
+setVal('cfg-api-senha',      intg.apiSenha);
+setCheck('cfg-sync-auto',    intg.syncAuto !== false);
+setVal('cfg-sync-intervalo', intg.syncIntervalo || '5');
 
-  setVal('cfg-email-notif',       nt.email);
-  setVal('cfg-email-cc',          nt.cc);
-  setCheck('cfg-notif-negado',    nt.negado    !== false);
-  setCheck('cfg-notif-critico',   nt.critico   !== false);
-  setCheck('cfg-notif-offline',   nt.offline   !== false);
-  setCheck('cfg-notif-relatorio', nt.relatorio);
+setCheck('cfg-backup-auto',   bkp.auto !== false);
+setVal('cfg-backup-freq',     bkp.freq     || 'diario');
+setVal('cfg-backup-retencao', bkp.retencao || '30');
 
-  setVal('cfg-api-url',        intg.apiUrl);
-  setVal('cfg-api-porta',      intg.apiPorta);
-  setVal('cfg-api-usuario',    intg.apiUsuario);
-  setVal('cfg-api-senha',      intg.apiSenha);
-  setCheck('cfg-sync-auto',    intg.syncAuto !== false);
-  setVal('cfg-sync-intervalo', intg.syncIntervalo || '5');
+if (bkp.ultimoBackup) {
+  const el  = document.getElementById('cfg-backup-ultimo');
+  const elA = document.getElementById('cfg-ultimo-backup');
+  if (el)  el.innerHTML    = `<i class="ph ph-check-circle" style="color:var(--success);"></i> Último backup: ${bkp.ultimoBackup}`;
+  if (elA) elA.textContent = bkp.ultimoBackup;
+}
 
-  setCheck('cfg-backup-auto',   bkp.auto !== false);
-  setVal('cfg-backup-freq',     bkp.freq     || 'diario');
-  setVal('cfg-backup-retencao', bkp.retencao || '30');
-  if (bkp.ultimoBackup) {
-    const el  = document.getElementById('cfg-backup-ultimo');
-    const elA = document.getElementById('cfg-ultimo-backup');
-    if (el)  el.innerHTML    = `<i class="ph ph-check-circle" style="color:var(--success);"></i> Último backup: ${bkp.ultimoBackup}`;
-    if (elA) elA.textContent = bkp.ultimoBackup;
-  }
 }
 
 /* =====================================================
@@ -503,12 +521,24 @@ async function salvarConfiguracoes() {
   btn.disabled  = true;
   btn.innerHTML = '<i class="ph ph-circle-notch"></i> Salvando...';
 
-  // 🔥 NOVO — salvar empresa no backend real
+// 🔥 NOVO — salvar empresa no backend real
 try {
+
+  const sb = window.getSupabase();
+  const { data: sessionData } = await sb.auth.getSession();
+  const session = sessionData?.session;
+
+if (!session?.user?.id) {
+  console.error('[CRV] usuário sem sessão');
+  mostrarToast('Sessão inválida, faça login novamente', 'error');
+  return;
+}
+
   const resp = await fetch('/api/atualizar-empresa', {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.user.id}`
     },
     body: JSON.stringify({
       nome: getVal('cfg-empresa-nome'),
@@ -717,11 +747,24 @@ function initModalOperador() {
 
     try {
       if (id) {
-        // ── EDITAR via backend (service_role atualiza metadados no Auth também)
+// ── EDITAR via backend (service_role atualiza metadados no Auth também)
+const sb = window.getSupabase();
+const { data: sessionData } = await sb.auth.getSession();
+const session = sessionData?.session;
+
+if (!session?.user?.id) {
+  console.error('[CRV] usuário sem sessão');
+  mostrarToast('Sessão inválida, faça login novamente', 'error');
+  return;
+}
+
 const resp = await fetch('/api/editar-usuario', {
-  method:  'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body:    JSON.stringify({ id, nome, perfil }),
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${session.user.id}`
+  },
+  body: JSON.stringify({ id, nome, perfil }),
 });
 
 let resultado;
@@ -736,11 +779,24 @@ if (!resp.ok) {
 }
 
       } else {
-        // ── CRIAR via backend
+// ── CRIAR via backend
+const sb = window.getSupabase();
+const { data: sessionData } = await sb.auth.getSession();
+const session = sessionData?.session;
+
+if (!session?.user?.id) {
+  console.error('[CRV] usuário sem sessão');
+  mostrarToast('Sessão inválida, faça login novamente', 'error');
+  return;
+}
+
 const resp = await fetch('/api/criar-usuario', {
-  method:  'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body:    JSON.stringify({ nome, email, senha, perfil }),
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${session.user.id}`
+  },
+  body: JSON.stringify({ nome, email, senha, perfil }),
 });
 
 let resultado;
@@ -878,24 +934,38 @@ onclick="window._abrirModalOperador(JSON.parse(decodeURIComponent(this.dataset.o
 
 window.alternarOperador = async function (id, novoStatus) {
   const rota = novoStatus ? '/api/reativar-usuario' : '/api/desativar-usuario';
-const resp = await fetch(rota, {
-  method:  'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body:    JSON.stringify({ id }),
-});
 
-let err;
-try {
-  err = await resp.json();
-} catch {
-  mostrarToast('Erro de comunicação com servidor', 'error');
+  const sb = window.getSupabase();
+  const { data: sessionData } = await sb.auth.getSession();
+  const session = sessionData?.session;
+
+if (!session?.user?.id) {
+  console.error('[CRV] usuário sem sessão');
+  mostrarToast('Sessão inválida, faça login novamente', 'error');
   return;
 }
 
-if (!resp.ok) {
-  mostrarToast('Erro: ' + (err.erro || 'Falha na operação'), 'error');
-  return;
-}
+  const resp = await fetch(rota, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.user.id}`
+    },
+    body: JSON.stringify({ id }),
+  });
+
+  let err;
+  try {
+    err = await resp.json();
+  } catch {
+    mostrarToast('Erro de comunicação com servidor', 'error');
+    return;
+  }
+
+  if (!resp.ok) {
+    mostrarToast('Erro: ' + (err.erro || 'Falha na operação'), 'error');
+    return;
+  }
 
   await registrarAuditoria({
     acao:      'editar',
@@ -908,7 +978,6 @@ if (!resp.ok) {
   carregarOperadores();
   mostrarToast(novoStatus ? 'Operador reativado!' : 'Operador desativado!', 'success');
 };
-
 
 /* =====================================================
    HELPERS SUPABASE
