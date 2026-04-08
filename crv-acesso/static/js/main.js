@@ -314,11 +314,16 @@ function initNavegacao() {
 
   // Qualquer botão/link com data-href="nome-da-pagina"
   document.addEventListener('click', (e) => {
-    const el = e.target.closest('[data-href]');
-    if (!el) return;
-    e.preventDefault();
-    const rota = ROTAS[el.dataset.href];
-    if (rota) window.location.href = rota;
+const el = e.target.closest('[data-href]');
+if (!el) return;
+
+const rota = ROTAS[el.dataset.href];
+
+// 🔥 SÓ INTERCEPTA SE FOR ROTA REAL
+if (!rota) return;
+
+e.preventDefault();
+window.location.href = rota;
   });
 }
 

@@ -168,7 +168,7 @@ function protegerPagina(perfilNecessario = null) {
 function filtrarMenuPorPerfil(perfil) {
   if (!perfil) return;
 
-  document.querySelectorAll('[data-page]').forEach(el => {
+  document.querySelectorAll('#sidebar .sidebar-item[data-page]').forEach(el => {
     const href  = (el.dataset.page || '').replace('.html', '');
     const telas = TELAS_PERMITIDAS[href];
 
