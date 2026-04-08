@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR" data-theme="dark">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -139,14 +139,6 @@
                   <option value="dd/MM/yyyy">DD/MM/AAAA</option>
                   <option value="MM/dd/yyyy">MM/DD/AAAA</option>
                   <option value="yyyy-MM-dd">AAAA-MM-DD</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Idioma</label>
-                <select class="form-control" id="cfg-idioma">
-                  <option value="pt-BR">Português (Brasil)</option>
-                  <option value="en">English</option>
-                  <option value="es">Español</option>
                 </select>
               </div>
             </div>
@@ -721,7 +713,7 @@
 
 <!-- MODAL: NOVO / EDITAR OPERADOR -->
 <div class="modal-overlay cfg-hidden" id="modal-operador">
-  <div class="modal func-modal">
+  <div class="user-modal">
 
     <div class="modal-header">
       <h3 class="modal-title func-modal-title" id="modal-operador-titulo">
@@ -771,6 +763,53 @@
   </div>
 </div>
 
+<!-- MODAL: EDITAR EMPRESA -->
+<div class="user-modal-overlay cfg-hidden" id="modal-editar-empresa">
+  <div class="user-modal">
+
+    <div class="modal-header">
+      <h3 class="modal-title">
+        <i class="ph ph-building"></i> Editar empresa
+      </h3>
+      <button class="user-modal-close" id="modal-editar-empresa-fechar">
+        <i class="ph ph-x"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+
+      <div class="form-group">
+        <label class="form-label">Nome da empresa</label>
+        <input type="text" class="form-control" id="edit-empresa-nome">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">CNPJ</label>
+        <input type="text" class="form-control" id="edit-empresa-cnpj">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Endereço</label>
+        <input type="text" class="form-control" id="edit-empresa-endereco">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Telefone</label>
+        <input type="text" class="form-control" id="edit-empresa-tel">
+      </div>
+
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="modal-editar-empresa-cancelar">Cancelar</button>
+      <button class="btn btn-primary" id="modal-editar-empresa-salvar">
+        <i class="ph ph-floppy-disk"></i> Salvar alterações
+      </button>
+    </div>
+
+  </div>
+</div>
+
 <!-- CDN Supabase — SEMPRE primeiro -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -781,6 +820,7 @@
 <script src="static/js/core/sync.js"></script>
 <script src="static/js/core/api.js"></script>
 <script src="static/js/core/permissoes.js"></script>
+<script src="static/js/core/auditoria.js"></script>
 
 <!-- AUTH (OBRIGATÓRIO) -->
 <script src="static/js/auth.js"></script>

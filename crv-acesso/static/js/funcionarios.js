@@ -60,16 +60,55 @@ function initModal() {
       }
 
       const reader = new FileReader();
-      reader.onload = (e) => {
-        const avatar = document.getElementById('modal-avatar-preview');
-        if (avatar) {
-          avatar.innerHTML = `
-            <img src="${e.target.result}"
-              style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
-          `;
-        }
-      };
-      reader.readAsDataURL(file);
+
+reader.onload = (e) => {
+
+  const img = new Image();
+
+  img.onload = () => {
+
+    const size = Math.min(img.width, img.height);
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+
+    canvas.width = 300;
+    canvas.height = 300;
+
+    const sx = (img.width  - size) / 2;
+    const sy = (img.height - size) / 2;
+
+    ctx.drawImage(img, sx, sy, size, size, 0, 0, 300, 300);
+
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+
+    const avatar = document.getElementById('modal-avatar-preview');
+
+    if (avatar) {
+      avatar.innerHTML = `
+        <img src="${dataUrl}"
+          style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
+      `;
+    }
+
+    // substitui arquivo original pelo recortado
+    fetch(dataUrl)
+      .then(res => res.blob())
+      .then(blob => {
+        const newFile = new File([blob], file.name, { type: 'image/jpeg' });
+
+        const dt = new DataTransfer();
+        dt.items.add(newFile);
+
+        inputFoto.files = dt.files;
+      });
+  };
+
+  img.src = e.target.result;
+};
+
+reader.readAsDataURL(file);
+
     });
   }
 }
@@ -141,7 +180,27 @@ async function salvarFuncionario() {
     return;
   }
 
-  const empId = document.getElementById('f-empresa_id')?.value;
+  const { data: sessionData } = await sb.auth.getSession();
+const user = sessionData?.session?.user;
+
+if (!user?.id) {
+  alert('Sessão inválida');
+  return;
+}
+
+const { data: userData, error: userError } = await sb
+  .from('usuarios')
+  .select('empresa_id')
+  .eq('id', user.id)
+  .single();
+
+if (userError || !userData?.empresa_id) {
+  console.error(userError);
+  alert('Erro ao identificar empresa do usuário.');
+  return;
+}
+
+const empId = userData.empresa_id;
 
   let foto_url = null;
 
@@ -150,18 +209,31 @@ async function salvarFuncionario() {
   if (file) {
     console.log('📸 Upload de foto iniciado');
 
-    const fileName = `func_${Date.now()}.jpg`;
+const fileName = `funcionarios/${empId}/func_${Date.now()}.jpg`;
 
-    const { error: uploadError } = await sb.storage
-      .from('funcionarios')
-      .upload(fileName, file, { upsert: true });
+const { data: uploadData, error: uploadError } = await sb.storage
+  .from('crv-assets')
+  .upload(fileName, file, {
+    cacheControl: '3600',
+    upsert: true
+  });
 
-    if (!uploadError) {
-      foto_url = `${sb.storage.from('funcionarios').getPublicUrl(fileName).data.publicUrl}`;
-    } else {
-      console.warn('Erro upload:', uploadError.message);
-    }
-  }
+if (uploadError) {
+  console.error('Erro upload:', uploadError.message);
+  alert('Erro ao enviar foto');
+  return;
+}
+
+const { data: publicUrlData } = sb
+  .storage
+  .from('crv-assets')
+  .getPublicUrl(fileName);
+
+foto_url = publicUrlData.publicUrl;
+
+console.log('📸 Foto salva:', foto_url);
+
+}
 
   const dados = {
     empresa_id: empId || null,
@@ -344,9 +416,12 @@ function renderizarFuncionarios(lista) {
 
   lista.forEach(func => {
 
-    const statusBadge = func.status === 'ativo'
-      ? '<span class="badge badge-success">Ativo</span>'
-      : '<span class="badge badge-danger">Inativo</span>';
+    const statusBadge = `
+  <button class="badge ${func.status === 'ativo' ? 'badge-success' : 'badge-danger'}"
+    onclick="toggleStatus('${func.id}', '${func.status}')">
+    ${func.status === 'ativo' ? 'Ativo' : 'Inativo'}
+  </button>
+`;
 
     const empresa = func.empresas?.nome || '—';
 
@@ -368,7 +443,9 @@ function renderizarFuncionarios(lista) {
        FOTO
        ============================================================ */
     const avatar = func.foto_url
-      ? `<img src="${func.foto_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
+      ? `<img src="${func.foto_url}"
+            style="width:100%;height:100%;object-fit:cover;border-radius:50%;"
+            onerror="this.style.display='none';this.parentElement.innerHTML='<i class=\\'ph ph-user\\'></i>';">`
       : '<i class="ph ph-user"></i>';
 
     const tr = document.createElement('tr');
@@ -629,3 +706,28 @@ function importarPlanilha() {
 
   input.click();
 }
+
+async function toggleStatus(id, statusAtual) {
+
+  const sb = window.getSupabase();
+  if (!sb) return;
+
+  const novoStatus = statusAtual === 'ativo' ? 'inativo' : 'ativo';
+
+  const { error } = await sb
+    .from('funcionarios')
+    .update({ status: novoStatus })
+    .eq('id', id);
+
+  if (error) {
+    alert('Erro ao alterar status');
+    return;
+  }
+
+  carregarFuncionarios();
+}
+
+window.editarFuncionario = editarFuncionario;
+window.excluirFuncionario = excluirFuncionario;
+window.liberarAcesso = liberarAcesso;
+window.toggleStatus = toggleStatus;

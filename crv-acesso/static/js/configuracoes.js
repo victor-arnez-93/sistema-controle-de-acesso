@@ -15,6 +15,37 @@ function iniciarConfiguracoes() {
   carregarConfiguracoes();
   carregarOperadores();
   initMascaras();
+
+  // 🚫 EVITA DUPLICAR EVENTOS
+  if (window._modalEmpresaInit) return;
+  window._modalEmpresaInit = true;
+
+  // EVENTOS MODAL EMPRESA
+  const btnFechar   = document.getElementById('modal-editar-empresa-fechar');
+  const btnCancelar = document.getElementById('modal-editar-empresa-cancelar');
+  const overlay     = document.getElementById('modal-editar-empresa');
+  const btnSalvar   = document.getElementById('modal-editar-empresa-salvar');
+
+  btnFechar?.addEventListener('click', fecharModalEdicaoEmpresa);
+  btnCancelar?.addEventListener('click', fecharModalEdicaoEmpresa);
+
+  overlay?.addEventListener('click', (e) => {
+    if (e.target.id === 'modal-editar-empresa') {
+      fecharModalEdicaoEmpresa();
+    }
+  });
+
+  btnSalvar?.addEventListener('click', async () => {
+
+    setVal('cfg-empresa-nome', getVal('edit-empresa-nome'));
+    setVal('cfg-empresa-cnpj', getVal('edit-empresa-cnpj'));
+    setVal('cfg-empresa-endereco', getVal('edit-empresa-endereco'));
+    setVal('cfg-empresa-tel', getVal('edit-empresa-tel'));
+
+    fecharModalEdicaoEmpresa();
+
+    await salvarConfiguracoes();
+  });
 }
 
 if (window._crvPronto) {
@@ -454,12 +485,40 @@ try {
 
   const empresa = await resp.json();
 
-  if (empresa && empresa.nome) {
-    setVal('cfg-empresa-nome',     empresa.nome);
-    setVal('cfg-empresa-cnpj',     empresa.cnpj);
-    setVal('cfg-empresa-endereco', empresa.endereco);
-    setVal('cfg-empresa-tel',      empresa.tel);
+if (empresa && empresa.nome) {
+  setVal('cfg-empresa-nome',     empresa.nome);
+  setVal('cfg-empresa-cnpj',     empresa.cnpj);
+  setVal('cfg-empresa-endereco', empresa.endereco);
+  setVal('cfg-empresa-tel',      empresa.tel);
+
+  // 🔒 BLOQUEIA CAMPOS
+  ['cfg-empresa-nome',
+   'cfg-empresa-cnpj',
+   'cfg-empresa-endereco',
+   'cfg-empresa-tel'
+  ].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.setAttribute('disabled', true);
+  });
+
+  // 🔥 BOTÃO EDITAR (evita duplicação)
+  if (!document.getElementById('btn-editar-empresa')) {
+
+    const container = document.querySelector('#secao-geral .cfg-card');
+
+    const btn = document.createElement('button');
+    btn.id = 'btn-editar-empresa';
+    btn.className = 'btn btn-primary btn-sm';
+    btn.style.marginTop = '10px';
+    btn.innerHTML = '<i class="ph ph-pencil"></i> Editar';
+
+    container.appendChild(btn);
+
+    btn.addEventListener('click', abrirModalEdicaoEmpresa);
   }
+}
+
+
 
 } catch (e) {
   console.warn('[CRV] erro ao carregar empresa real:', e);
@@ -1124,4 +1183,23 @@ function formatarTelefone(valor) {
 
 function limparNumero(valor) {
   return (valor || '').replace(/\D/g, '');
+}
+
+function abrirModalEdicaoEmpresa() {
+
+  // preenche campos com dados atuais
+  setVal('edit-empresa-nome', getVal('cfg-empresa-nome'));
+  setVal('edit-empresa-cnpj', getVal('cfg-empresa-cnpj'));
+  setVal('edit-empresa-endereco', getVal('cfg-empresa-endereco'));
+  setVal('edit-empresa-tel', getVal('cfg-empresa-tel'));
+
+  const overlay = document.getElementById('modal-editar-empresa');
+  overlay.classList.remove('cfg-hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+function fecharModalEdicaoEmpresa() {
+  const overlay = document.getElementById('modal-editar-empresa');
+  overlay.classList.add('cfg-hidden');
+  document.body.style.overflow = '';
 }

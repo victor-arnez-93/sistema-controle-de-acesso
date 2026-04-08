@@ -566,6 +566,11 @@ MODAL FUNCIONÁRIO — padrão global do sistema
   border-radius: 99px;
 }
 
+#func-table-wrap {
+  max-height: 420px;
+  overflow-y: auto;
+}
+
 /* =====================================================
 RESPONSIVO
 ===================================================== */
