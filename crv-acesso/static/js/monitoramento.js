@@ -251,3 +251,44 @@ const Monitoramento = (() => {
   return { init };
 
 })();
+
+async function liberarCatraca(id) {
+
+  const sb = window.getSupabase();
+  if (!sb) return;
+
+  // 🔥 BUSCA UM FUNCIONÁRIO REAL
+  const { data: funcs, error: funcError } = await sb
+    .from('funcionarios')
+    .select('id, nome, cargo')
+    .limit(1);
+
+  if (funcError || !funcs || funcs.length === 0) {
+    console.error(funcError);
+    alert('Nenhum funcionário encontrado');
+    return;
+  }
+
+  const func = funcs[0];
+
+  // 🔥 INSERE ACESSO REAL
+  const { error } = await sb
+    .from('acessos')
+    .insert({
+      funcionario_id: func.id,
+      nome: func.nome,
+      setor: func.cargo,
+      catraca: `Catraca ${id}`,
+      metodo: 'Manual',
+      tipo: 'entrada',
+      resultado: 'liberado',
+      data: new Date().toISOString()
+    });
+
+  if (error) {
+    console.error(error);
+    alert('Erro ao liberar acesso');
+  }
+}
+
+window.liberarCatraca = liberarCatraca;

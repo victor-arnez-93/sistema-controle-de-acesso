@@ -350,8 +350,7 @@ async function carregarFuncionarios() {
       .from('funcionarios')
       .select(`
         *,
-        empresas(nome),
-        acessos(data, tipo, resultado)
+        empresas(nome)
       `)
       .order('nome');
 
