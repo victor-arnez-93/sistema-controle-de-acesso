@@ -13,6 +13,10 @@ const Monitoramento = (() => {
 
   let pausado = false;
   let online = navigator.onLine;
+  let eventosCache = [];
+  let filtroAtual = 'todos';
+  let realtimeChannel = null;
+  let funcionariosCache = {};
 
   const feedEl = () => document.getElementById('monitor-feed');
 
@@ -23,6 +27,7 @@ const Monitoramento = (() => {
       bindEventos();
       atualizarStatusRede();
 
+      await carregarFuncionarios();
       await carregarInicial();
       iniciarRealtime();
 
@@ -54,14 +59,16 @@ const Monitoramento = (() => {
       if (online) {
         const dados = await window.apiCRV.buscarAcessosRecentes();
 
-        renderFeed(dados);
-        atualizarKPIs(dados);
+        eventosCache = dados || [];
+        aplicarFiltroAtual();
+        atualizarKPIs(eventosCache);
 
         console.log('✅ Dados carregados (online)');
       } else {
         const dados = await window.dbCRV.getEventos();
 
-        renderFeed(dados);
+        eventosCache = dados || [];
+        aplicarFiltroAtual();
 
         console.log('📴 Dados carregados do offline');
       }
@@ -69,6 +76,35 @@ const Monitoramento = (() => {
       console.error('❌ Erro ao carregar dados:', e);
     }
   }
+
+  async function carregarFuncionarios() {
+
+  const sb = window.getSupabase();
+  if (!sb) return;
+
+  try {
+
+    const { data, error } = await sb
+      .from('funcionarios')
+      .select('id, nome, cargo, foto_url');
+
+    if (error) {
+      console.error('Erro ao carregar funcionários', error);
+      return;
+    }
+
+    funcionariosCache = {};
+
+    data.forEach(f => {
+      funcionariosCache[f.id] = f;
+    });
+
+    console.log('👥 Funcionários carregados');
+
+  } catch (e) {
+    console.error('Erro geral ao carregar funcionários', e);
+  }
+}
 
   function renderFeed(lista) {
     const feed = feedEl();
@@ -84,59 +120,90 @@ const Monitoramento = (() => {
       return;
     }
 
-    lista.reverse().forEach(ev => adicionarEvento(ev));
+    [...lista].reverse().forEach(ev => adicionarEvento(ev));
   }
 
-  function adicionarEvento(ev) {
-    if (pausado) return;
+  function aplicarFiltroAtual() {
 
-    const filtro = document.getElementById('filtro-tipo').value;
-    if (filtro && ev.resultado !== filtro) return;
+  let lista = [...eventosCache];
 
-    const hora = new Date(ev.data).toLocaleTimeString('pt-BR');
+  if (filtroAtual === 'liberado') {
+    lista = lista.filter(e => e.resultado === 'liberado');
+  }
 
-    const item = document.createElement('div');
-    item.className = `feed-item ${ev.resultado}`;
+  if (filtroAtual === 'negado') {
+    lista = lista.filter(e => e.resultado === 'negado');
+  }
 
-    item.innerHTML = `
-      <div class="feed-avatar">${getIniciais(ev.nome || 'Usuário')}</div>
+  renderFeed(lista);
+}
 
-      <div class="feed-info">
-        <div class="feed-nome">${ev.nome || 'Não identificado'}</div>
-        <div class="feed-meta">
-          <span>${ev.setor || '-'}</span>
-          <span>·</span>
-          <span>${ev.catraca || '-'}</span>
-          <span>·</span>
-          <span>${ev.metodo}</span>
-        </div>
+function adicionarEvento(ev) {
+  const func = funcionariosCache[ev.funcionario_id];
+
+  if (pausado) return;
+
+  // só adiciona no cache se vier do realtime (evita duplicação)
+  if (ev && ev.id && !eventosCache.find(e => e.id === ev.id)) {
+    eventosCache.push(ev);
+  }
+
+  if (filtroAtual !== 'todos' && ev.resultado !== filtroAtual) return;
+
+  const hora = new Date(ev.data).toLocaleTimeString('pt-BR');
+
+  const item = document.createElement('div');
+  item.className = `feed-item ${ev.resultado}`;
+
+  item.innerHTML = `
+    <div class="feed-avatar">
+      ${func?.foto_url
+        ? `<img src="${func.foto_url}" alt="foto">`
+        : getIniciais(func?.nome || ev.nome || 'Usuário')}
+    </div>
+
+    <div class="feed-info">
+      <div class="feed-nome">${func?.nome || ev.nome || 'Não identificado'}</div>
+      <div class="feed-meta">
+        <span>${func?.cargo || ev.setor || '-'}</span>
+        <span>·</span>
+        <span>${ev.catraca || '-'}</span>
+        <span>·</span>
+        <span>${ev.metodo}</span>
       </div>
+    </div>
 
-      <div class="feed-right">
-        <span class="feed-hora">${hora}</span>
-        ${badgeTipo(ev.tipo)}
-        ${badgeResultado(ev.resultado)}
-      </div>
-    `;
+    <div class="feed-right">
+      <span class="feed-hora">${hora}</span>
+      ${badgeTipo(ev.tipo)}
+      ${badgeResultado(ev.resultado)}
+    </div>
+  `;
 
-    feedEl().prepend(item);
+  feedEl().prepend(item);
 
-    limitarFeed();
-    atualizarUltimo(ev);
-  }
+  limitarFeed();
+  atualizarUltimo(ev);
+}
 
-  function atualizarUltimo(ev) {
-    document.getElementById('last-empty').classList.add('rec-hidden');
-    document.getElementById('last-content').classList.remove('rec-hidden');
+function atualizarUltimo(ev) {
+  const func = funcionariosCache[ev.funcionario_id];
 
-    document.getElementById('last-avatar').textContent = getIniciais(ev.nome);
-    document.getElementById('last-nome').textContent = ev.nome || '—';
-    document.getElementById('last-meta').textContent =
-      `${ev.catraca} · ${new Date(ev.data).toLocaleTimeString('pt-BR')}`;
+  document.getElementById('last-empty').classList.add('rec-hidden');
+  document.getElementById('last-content').classList.remove('rec-hidden');
 
-    document.getElementById('last-badges').innerHTML =
-      `${badgeResultado(ev.resultado)} ${badgeTipo(ev.tipo)}`;
-  }
+  document.getElementById('last-avatar').textContent =
+    getIniciais(func?.nome || ev.nome);
+
+  document.getElementById('last-nome').textContent =
+    func?.nome || ev.nome || '—';
+
+  document.getElementById('last-meta').textContent =
+    `${ev.catraca} · ${new Date(ev.data).toLocaleTimeString('pt-BR')}`;
+
+  document.getElementById('last-badges').innerHTML =
+    `${badgeResultado(ev.resultado)} ${badgeTipo(ev.tipo)}`;
+}
 
   function atualizarKPIs(lista) {
     const total = lista.length;
@@ -152,12 +219,16 @@ const Monitoramento = (() => {
 
   function iniciarRealtime() {
     console.log('📡 Iniciando tempo real...');
+    if (realtimeChannel) {
+  console.log('⚠️ Realtime já ativo');
+  return;
+}
 
     if (!window.getSupabase) return;
 
     const sb = window.getSupabase();
 
-    sb.channel('acessos-realtime')
+    realtimeChannel = sb.channel('acessos-realtime')
       .on(
         'postgres_changes',
         {
@@ -180,16 +251,38 @@ const Monitoramento = (() => {
       .subscribe();
   }
 
-  function togglePausa() {
-    pausado = !pausado;
+function togglePausa() {
 
-    document.getElementById('btn-pausar').innerHTML = pausado
-      ? '<i class="ph ph-play"></i> Retomar'
-      : '<i class="ph ph-pause"></i> Pausar';
+  pausado = !pausado;
+
+  const sb = window.getSupabase();
+
+  if (!sb) return;
+
+  if (pausado) {
+
+    console.log('⏸️ Pausando realtime...');
+
+    if (realtimeChannel) {
+      sb.removeChannel(realtimeChannel);
+      realtimeChannel = null;
+    }
+
+  } else {
+
+    console.log('▶️ Retomando realtime...');
+
+    iniciarRealtime();
   }
 
+  document.getElementById('btn-pausar').innerHTML = pausado
+    ? '<i class="ph ph-play"></i> Retomar'
+    : '<i class="ph ph-pause"></i> Pausar';
+}
+
   function aplicarFiltro() {
-    carregarInicial();
+    filtroAtual = document.getElementById('filtro-tipo').value || 'todos';
+    aplicarFiltroAtual();
   }
 
   function onOnline() {
