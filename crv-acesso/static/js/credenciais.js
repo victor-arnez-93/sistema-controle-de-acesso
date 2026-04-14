@@ -17,6 +17,7 @@ if (!sb) {
   initModal();
   initTabs();
   initBusca();
+  initTipoCredencial();
 
   carregarCredenciais();
 
@@ -162,7 +163,15 @@ if (!sb) {
     funcionario_id: funcionarioId,
     tipo,
     codigo: document.getElementById('cred-num-cartao')?.value || null,
-    ativo: true
+    const status = document.getElementById('cred-status')?.value || 'ativa';
+
+const dados = {
+  funcionario_id: funcionarioId,
+  tipo,
+  codigo: document.getElementById('cred-num-cartao')?.value || null,
+  ativo: status === 'ativa',
+  status
+};
   };
 
   let response;
@@ -336,5 +345,42 @@ if (!sb) {
   await sb.from('credenciais').delete().eq('id',id);
 
   carregarCredenciais();
+
+}
+
+function initTipoCredencial() {
+
+  const itens = document.querySelectorAll('.cred-tipo-item');
+
+  itens.forEach(item => {
+
+    item.addEventListener('click', () => {
+
+      itens.forEach(i => i.classList.remove('selected'));
+      item.classList.add('selected');
+
+      const tipo = item.dataset.tipo;
+
+      // esconde todos
+      document.getElementById('cred-campos-cartao')?.classList.add('func-table-hidden');
+      document.getElementById('cred-campos-senha')?.classList.add('func-table-hidden');
+      document.getElementById('cred-campos-bio')?.classList.add('func-table-hidden');
+
+      // mostra conforme tipo
+      if (tipo === 'cartao') {
+        document.getElementById('cred-campos-cartao')?.classList.remove('func-table-hidden');
+      }
+
+      if (tipo === 'senha') {
+        document.getElementById('cred-campos-senha')?.classList.remove('func-table-hidden');
+      }
+
+      if (tipo === 'biometria' || tipo === 'facial') {
+        document.getElementById('cred-campos-bio')?.classList.remove('func-table-hidden');
+      }
+
+    });
+
+  });
 
 }
