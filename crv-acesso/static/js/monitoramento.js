@@ -364,24 +364,63 @@ async function liberarCatraca(id) {
 
   const func = funcs[0];
 
-  // 🔥 INSERE ACESSO REAL
+  // 🔍 BUSCAR CREDENCIAL ATIVA
+  const { data: credencial } = await sb
+    .from('credenciais')
+    .select('*')
+    .eq('funcionario_id', func.id)
+    .eq('ativo', true)
+    .maybeSingle();
+
+  let resultado = 'liberado';
+
+  // 🚨 REGRA 1 — SEM CREDENCIAL
+  if (!credencial) {
+    resultado = 'negado';
+  }
+
+  // 🚨 REGRA 2 — BLOQUEADA
+  else if (credencial.status !== 'ativa') {
+    resultado = 'negado';
+  }
+
+  // 🚨 REGRA 3 — VALIDADE
+  else if (credencial.validade) {
+
+    const hoje = new Date();
+    hoje.setHours(0,0,0,0);
+
+    const validade = new Date(credencial.validade);
+    validade.setHours(0,0,0,0);
+
+    if (validade < hoje) {
+      resultado = 'negado';
+    }
+
+  }
+
+  // 🔥 INSERE EVENTO
   const { error } = await sb
     .from('acessos')
     .insert({
       funcionario_id: func.id,
-      nome: func.nome,
-      setor: func.cargo,
+      nome: func.nome,  // ⚠️ TODO: remover nome/setor e usar apenas funcionario_id (normalização)
+      setor: func.cargo,    // ⚠️ TODO: remover nome/setor e usar apenas funcionario_id (normalização)
       catraca: `Catraca ${id}`,
       metodo: 'Manual',
       tipo: 'entrada',
-      resultado: 'liberado',
+      resultado: resultado,
       data: new Date().toISOString()
     });
 
   if (error) {
     console.error(error);
-    alert('Erro ao liberar acesso');
+    alert('Erro ao registrar acesso');
+    return;
   }
+
+  console.log(`🚪 Acesso ${resultado.toUpperCase()}`);
+
 }
 
 window.liberarCatraca = liberarCatraca;

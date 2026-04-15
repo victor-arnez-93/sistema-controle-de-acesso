@@ -95,18 +95,23 @@ async function abrirModal(dados = null) {
 
   limparModal();
 
-  if (dados) {
+if (dados) {
 
-    credencialEditando = dados.id;
+  credencialEditando = dados.id;
 
-    titulo.textContent = 'Editar Credencial';
+  titulo.textContent = 'Editar Credencial';
 
-    document.getElementById('cred-funcionario').value = dados.funcionario_id;
+  document.getElementById('cred-funcionario').value = dados.funcionario_id;
 
-    const tipoItem = document.querySelector(`.cred-tipo-item[data-tipo="${dados.tipo}"]`);
-    tipoItem?.click();
+  // 🔥 PREENCHE CAMPOS
+  document.getElementById('cred-num-cartao').value = dados.codigo || '';
+  document.getElementById('cred-status').value = dados.status || 'ativa';
 
-  } else {
+  // 🔥 SELECIONA TIPO VISUAL
+  const tipoItem = document.querySelector(`.cred-tipo-item[data-tipo="${dados.tipo}"]`);
+  tipoItem?.click();
+
+} else {
 
     credencialEditando = null;
     titulo.textContent = 'Nova Credencial';
@@ -146,10 +151,10 @@ async function salvarCredencial() {
 
   const sb = window.getSupabase();
 
-if (!sb) {
-  console.error('[CREDENCIAIS] Supabase não inicializado');
-  return;
-}
+  if (!sb) {
+    console.error('[CREDENCIAIS] Supabase não inicializado');
+    return;
+  }
 
   const funcionarioId = document.getElementById('cred-funcionario').value;
 
@@ -159,27 +164,158 @@ if (!sb) {
 
   if (!tipo) return alert('Selecione tipo');
 
+  // 🔐 VALIDAÇÃO DE SENHA
+  if (tipo === 'senha') {
+
+    const senha = document.getElementById('cred-senha')?.value;
+    const conf  = document.getElementById('cred-senha-conf')?.value;
+
+    if (!senha || senha.length < 4) {
+      alert('Senha deve ter pelo menos 4 caracteres.');
+      return;
+    }
+
+    if (senha !== conf) {
+      alert('As senhas não coincidem.');
+      return;
+    }
+
+  }
+
+  // 🚨 VALIDAÇÃO DE CARTÃO (CÓDIGO ÚNICO)
+  if (tipo === 'cartao') {
+
+    const codigo = document.getElementById('cred-num-cartao')?.value;
+
+    if (!codigo) {
+      alert('Informe o código do cartão.');
+      return;
+    }
+
+    const { data: existentes } = await sb
+      .from('credenciais')
+      .select('id')
+      .eq('codigo', codigo)
+      .eq('ativo', true);
+
+if (existentes && existentes.length > 0) {
+
+  if (
+    !credencialEditando ||
+    !existentes.find(e => e.id === credencialEditando)
+  ) {
+    alert('Já existe uma credencial ativa com esse código.');
+    return;
+  }
+
+}
+
+  // 🔥 STATUS
+  const status = document.getElementById('cred-status')?.value || 'ativa';
+
+  // 🔐 HASH DE SENHA (SHA-256)
+  let senhaHash = null;
+
+  if (tipo === 'senha') {
+    const senha = document.getElementById('cred-senha')?.value;
+    senhaHash = await gerarHash(senha);
+  }
+
+  // 🔥 DADOS
   const dados = {
     funcionario_id: funcionarioId,
     tipo,
     codigo: document.getElementById('cred-num-cartao')?.value || null,
-    const status = document.getElementById('cred-status')?.value || 'ativa';
+    senha_hash: senhaHash,
+    validade: document.getElementById('cred-validade')?.value || null,
+    ativo: status === 'ativa',
+    status: status
+  };
+
+  // 🚨 BLOQUEAR DUPLICIDADE POR FUNCIONÁRIO + TIPO
+  const { data: existenteFunc } = await sb
+    .from('credenciais')
+    .select('id')
+    .eq('funcionario_id', funcionarioId)
+    .eq('tipo', tipo)
+    .eq('ativo', true)
+    .maybeSingle();
+
+  if (existenteFunc && existenteFunc.id !== credencialEditando) {
+    alert('Este funcionário já possui uma credencial ativa desse tipo.');
+    return;
+  }
+
+  let response;
+
+  if (credencialEditando) {
+    response = await sb
+      .from('credenciais')
+      .update(dados)
+      .eq('id', credencialEditando);
+  } else {
+    response = await sb
+      .from('credenciais')
+      .insert([dados]);
+  }
+
+  if (response.error) {
+    alert(response.error.message);
+    return;
+  }
+
+  console.log('✅ Credencial salva');
+
+  fecharModal();
+  carregarCredenciais();
+
+}
+
+  // 🔥 STATUS CORRETO (FORA DO OBJETO)
+  const status = document.getElementById('cred-status')?.value || 'ativa';
+
+  // 🔥 OBJETO LIMPO E CORRETO
+let senhaHash = null;
+
+if (tipo === 'senha') {
+  const senha = document.getElementById('cred-senha')?.value;
+  senhaHash = await gerarHash(senha);
+}
 
 const dados = {
   funcionario_id: funcionarioId,
   tipo,
   codigo: document.getElementById('cred-num-cartao')?.value || null,
+  senha_hash: senhaHash,
   ativo: status === 'ativa',
-  status
+  status: status
 };
-  };
+
+  // 🚨 BLOQUEAR DUPLICIDADE POR FUNCIONÁRIO + TIPO
+const { data: existenteFunc } = await sb
+  .from('credenciais')
+  .select('id')
+  .eq('funcionario_id', funcionarioId)
+  .eq('tipo', tipo)
+  .eq('ativo', true)
+  .maybeSingle();
+
+if (existenteFunc && existenteFunc.id !== credencialEditando) {
+  alert('Este funcionário já possui uma credencial ativa desse tipo.');
+  return;
+}
 
   let response;
 
   if (credencialEditando) {
-    response = await sb.from('credenciais').update(dados).eq('id', credencialEditando);
+    response = await sb
+      .from('credenciais')
+      .update(dados)
+      .eq('id', credencialEditando);
   } else {
-    response = await sb.from('credenciais').insert([dados]);
+    response = await sb
+      .from('credenciais')
+      .insert([dados]);
   }
 
   if (response.error) {
@@ -201,17 +337,50 @@ async function carregarFuncionariosSelect(){
 
   const sb = window.getSupabase();
 
-if (!sb) {
-  console.error('[CREDENCIAIS] Supabase não inicializado');
-  return;
-}
+  if (!sb) {
+    console.error('[CREDENCIAIS] Supabase não inicializado');
+    return;
+  }
+
   const select = document.getElementById("cred-funcionario");
 
   select.innerHTML = '<option value="">Selecione...</option>';
 
-  const {data} = await sb.from("funcionarios").select("id,nome");
+  // 🔥 BUSCA USUÁRIO LOGADO
+  const { data: sessionData } = await sb.auth.getSession();
+  const user = sessionData?.session?.user;
 
-  data?.forEach(f=>{
+  if (!user?.id) {
+    console.error('[CREDENCIAIS] Usuário não identificado');
+    return;
+  }
+
+  // 🔥 BUSCA EMPRESA DO USUÁRIO
+  const { data: userData, error: userError } = await sb
+    .from('usuarios')
+    .select('empresa_id')
+    .eq('id', user.id)
+    .single();
+
+  if (userError || !userData?.empresa_id) {
+    console.error('[CREDENCIAIS] Erro ao obter empresa', userError);
+    return;
+  }
+
+  const empId = userData.empresa_id;
+
+  // 🔥 AGORA SIM — FILTRADO POR EMPRESA
+  const { data, error } = await sb
+    .from("funcionarios")
+    .select("id,nome")
+    .eq('empresa_id', empId);
+
+  if (error) {
+    console.error('[CREDENCIAIS] Erro ao carregar funcionários', error);
+    return;
+  }
+
+  data?.forEach(f => {
     const opt = document.createElement("option");
     opt.value = f.id;
     opt.textContent = f.nome;
@@ -300,8 +469,19 @@ function atualizarKPIs(lista) {
 function renderizarCredenciais(lista){
 
   const tbody = document.getElementById('cred-tbody');
+  const empty = document.getElementById('cred-empty');
+  const table = document.getElementById('cred-table-wrap');
 
   tbody.innerHTML='';
+
+  if (!lista || lista.length === 0) {
+    empty?.classList.remove('func-table-hidden');
+    table?.classList.add('func-table-hidden');
+    return;
+  }
+
+  empty?.classList.add('func-table-hidden');
+  table?.classList.remove('func-table-hidden');
 
   lista.forEach(c=>{
 
@@ -311,11 +491,36 @@ function renderizarCredenciais(lista){
       <td>${c.funcionarios?.nome || '-'}</td>
       <td>${c.tipo}</td>
       <td>${c.codigo || '-'}</td>
+      <td>
+          ${c.validade
+            ? new Date(c.validade).toLocaleDateString()
+            : 'Sem validade'}
+      </td>
+      <td>-</td>
       <td>${c.ativo ? 'Ativo' : 'Bloqueado'}</td>
       <td>
-        <button onclick="editarCredencial('${c.id}')">Editar</button>
-        <button onclick="excluirCredencial('${c.id}')">Excluir</button>
-      </td>
+  <div style="display:flex;gap:6px;">
+
+    <button class="btn btn-ghost btn-sm btn-icon"
+      title="Editar"
+      onclick="editarCredencial('${c.id}')">
+      <i class="ph ph-pencil"></i>
+    </button>
+
+    <button class="btn btn-secondary btn-sm btn-icon"
+      title="${c.ativo ? 'Bloquear' : 'Ativar'}"
+      onclick="toggleCredencial('${c.id}', ${c.ativo})">
+      <i class="ph ${c.ativo ? 'ph-lock' : 'ph-lock-open'}"></i>
+    </button>
+
+    <button class="btn btn-danger btn-sm btn-icon"
+      title="Excluir"
+      onclick="excluirCredencial('${c.id}')">
+      <i class="ph ph-trash"></i>
+    </button>
+
+  </div>
+</td>
     `;
 
     tbody.appendChild(tr);
@@ -383,4 +588,37 @@ function initTipoCredencial() {
 
   });
 
+}
+
+async function toggleCredencial(id, ativoAtual){
+
+  const sb = window.getSupabase();
+
+  if (!sb) return;
+
+  const novoStatus = !ativoAtual;
+
+  const { error } = await sb
+    .from('credenciais')
+    .update({
+      ativo: novoStatus,
+      status: novoStatus ? 'ativa' : 'bloqueada'
+    })
+    .eq('id', id);
+
+  if (error) {
+    alert('Erro ao atualizar credencial');
+    return;
+  }
+
+  carregarCredenciais();
+
+}
+
+async function gerarHash(texto) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(texto);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
