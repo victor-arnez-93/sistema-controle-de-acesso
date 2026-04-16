@@ -10,12 +10,35 @@ document.addEventListener('DOMContentLoaded', () => {
   initBusca();
   initImportExport();
   carregarFuncionarios();
+  carregarGruposSelect();
 });
 
 /* ============================================================
    ESTADO GLOBAL
    ============================================================ */
 let funcionariosLista = [];
+async function carregarGruposSelect() {
+
+  const sb = window.getSupabase();
+  if (!sb) return;
+
+  const { data } = await sb
+    .from('grupos')
+    .select('id, nome')
+    .order('nome');
+
+  const select = document.getElementById('f-grupo');
+  if (!select) return;
+
+  select.innerHTML = '<option value="">Sem grupo</option>';
+
+  data?.forEach(g => {
+    const opt = document.createElement('option');
+    opt.value = g.id;
+    opt.textContent = g.nome;
+    select.appendChild(opt);
+  });
+}
 let funcionarioEditando = null;
 
 /* ============================================================
@@ -134,6 +157,7 @@ async function abrirModal(dados = null) {
       'f-cpf': dados.cpf,
       'f-matricula': dados.matricula,
       'f-cargo': dados.cargo,
+      'f-grupo': dados.grupo_id,
     };
 
     Object.entries(map).forEach(([id, val]) => {
@@ -242,6 +266,7 @@ console.log('📸 Foto salva:', foto_url);
     matricula: document.getElementById('f-matricula')?.value.trim() || null,
     cargo: document.getElementById('f-cargo')?.value.trim() || null,
     status: document.getElementById('f-ativo')?.checked ? 'ativo' : 'inativo',
+    grupo_id: document.getElementById('f-grupo')?.value || null,
     foto_url
   };
 
@@ -255,9 +280,36 @@ console.log('📸 Foto salva:', foto_url);
         .update(dados)
         .eq('id', funcionarioEditando);
     } else {
+
       response = await sb
         .from('funcionarios')
-        .insert([dados]);
+        .insert([dados])
+        .select(); // 🔥 IMPORTANTE
+
+      if (!response.error && response.data && response.data.length > 0) {
+
+        const novoId = response.data[0].id;
+
+        // 🔥 VINCULAR REGRAS PELO GRUPO
+        if (dados.grupo_id) {
+
+          const { data: regrasGrupo } = await sb
+            .from('regras_acesso')
+            .select('id')
+            .eq('grupo_id', dados.grupo_id)
+            .eq('status', 'ativa');
+
+          if (regrasGrupo && regrasGrupo.length > 0) {
+
+            const vinculos = regrasGrupo.map(r => ({
+              funcionario_id: novoId,
+              regra_id: r.id
+            }));
+
+            await sb.from('funcionario_regras').insert(vinculos);
+          }
+        }
+      }
     }
 
     if (response.error) {

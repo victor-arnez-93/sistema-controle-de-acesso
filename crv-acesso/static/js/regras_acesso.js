@@ -42,6 +42,10 @@ async function carregarTudo() {
     carregarGrupos(),
     carregarAreas()
   ]);
+
+  // 🔥 GARANTE QUE SELECTS RECEBAM DADOS
+  preencherSelectsRegra();
+
   atualizarKPIs();
 }
 

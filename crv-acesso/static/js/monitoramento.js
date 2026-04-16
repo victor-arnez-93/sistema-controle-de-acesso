@@ -364,10 +364,21 @@ function togglePausa() {
   const map = {
     sem_credencial: 'Sem credencial',
     bloqueada: 'Bloqueada',
-    vencida: 'Vencida'
+    vencida: 'Vencida',
+    fora_horario: 'Fora do horário',
+    regra_negada: 'Acesso não permitido',
+    sem_regra: 'Sem regra de acesso',
+    fora_dia: 'Fora do dia permitido',
+    area_negada: 'Área não permitida',
   };
 
-  return `<span class="badge badge-outline">${map[ev.motivo] || ''}</span>`;
+  const cores = {
+  sem_credencial: 'badge-neutral',
+  bloqueada: 'badge-danger',
+  vencida: 'badge-warning'
+};
+
+return `<span class="badge ${cores[ev.motivo] || 'badge-outline'}">${map[ev.motivo] || ''}</span>`;
 }
 
   function badgeTipo(tipo) {
@@ -380,7 +391,7 @@ function togglePausa() {
 
 })();
 
-async function liberarCatraca(id) {
+async function liberarCatraca(id, tipo = 'entrada') {
 
   const sb = window.getSupabase();
   if (!sb) return;
@@ -398,6 +409,7 @@ async function liberarCatraca(id) {
   }
 
   const func = funcs[0];
+  const grupoFuncionario = func.grupo_id || null;
 
   // 🔍 BUSCAR CREDENCIAL ATIVA
   const { data: credencial } = await sb
@@ -407,47 +419,177 @@ async function liberarCatraca(id) {
     .eq('ativo', true)
     .maybeSingle();
 
- let resultado = 'liberado';
- let motivo = null;
+  let resultado = 'liberado';
+  let motivo = null;
 
-// 🚨 REGRA 1 — SEM CREDENCIAL
-if (!credencial) {
-  resultado = 'negado';
-  motivo = 'sem_credencial';
-}
+// 🔥 BUSCAR EQUIPAMENTO REAL
+const { data: equipamento } = await sb
+  .from('equipamentos')
+  .select('id, nome, area_id')
+  .eq('id', id)
+  .maybeSingle();
 
-// 🚨 REGRA 2 — BLOQUEADA
-else if (credencial.status !== 'ativa') {
-  resultado = 'negado';
-  motivo = 'bloqueada';
-}
+const areaAtual = equipamento?.area_id || null;
 
-// 🚨 REGRA 3 — VALIDADE
-else if (credencial.validade) {
+  // ============================================================
+  // 🔥 VALIDAÇÃO DE REGRAS (CORRETA PARA SEU BANCO)
+  // ============================================================
+
+  const { data: regrasFuncionario } = await sb
+    .from('funcionario_regras')
+    .select('regra_id')
+    .eq('funcionario_id', func.id);
+
+  if (!regrasFuncionario || regrasFuncionario.length === 0) {
+
+    resultado = 'negado';
+    motivo = 'sem_regra';
+
+  } else {
+
+const regrasIds = regrasFuncionario.map(r => r.regra_id);
+
+// 🔥 BUSCAR REGRAS REAIS
+const { data: regras } = await sb
+  .from('regras_acesso')
+  .select('*')
+  .in('id', regrasIds);
+
+  // 🔥 ORDENA POR PRIORIDADE
+const ordem = {
+  critica: 3,
+  alta: 2,
+  normal: 1
+};
+
+regras.sort((a, b) => (ordem[b.prioridade] || 0) - (ordem[a.prioridade] || 0));
+
+const agora = new Date();
+const horaAtual = agora.toTimeString().slice(0,5);
+
+let permitido = false;
+
+for (const r of regras) {
 
   const hoje = new Date();
-  hoje.setHours(0,0,0,0);
+  let diaAtual = hoje.getDay();
+  diaAtual = diaAtual === 0 ? 7 : diaAtual;
 
-  const validade = new Date(credencial.validade);
-  validade.setHours(0,0,0,0);
+  let diasPermitidos = [];
 
-  if (validade < hoje) {
-    resultado = 'negado';
-    motivo = 'vencida';
+  try {
+    diasPermitidos = Array.isArray(r.dias_semana)
+      ? r.dias_semana
+      : JSON.parse(r.dias_semana || '[]');
+  } catch {
+    diasPermitidos = [];
   }
 
+  const diaOk =
+    diasPermitidos.length === 0 ||
+    diasPermitidos.includes(diaAtual);
+
+  const horarioOk =
+    !r.horario_inicio ||
+    (horaAtual >= r.horario_inicio && horaAtual <= r.horario_fim);
+
+const grupoOk =
+  !r.grupo_id ||
+  r.grupo_id === grupoFuncionario;
+
+const areaOk =
+  !r.area_id ||
+  r.area_id === areaAtual;
+
+if (diaOk && horarioOk && grupoOk && areaOk) {
+    permitido = true;
+    break; // 🔥 PARA NA PRIMEIRA REGRA VÁLIDA (MAIOR PRIORIDADE)
+  }
 }
 
-  // 🔥 INSERE EVENTO
+  // 🔥 VALIDA DIA DA SEMANA
+  const hoje = new Date();
+  let diaAtual = hoje.getDay(); // 0 = domingo
+
+  diaAtual = diaAtual === 0 ? 7 : diaAtual; // transforma domingo em 7
+
+  let diasPermitidos = [];
+
+  try {
+    diasPermitidos = Array.isArray(r.dias_semana)
+      ? r.dias_semana
+      : JSON.parse(r.dias_semana || '[]');
+  } catch {
+    diasPermitidos = [];
+  }
+
+  const diaOk =
+    diasPermitidos.length === 0 ||
+    diasPermitidos.includes(diaAtual);
+
+  // 🔥 VALIDA HORÁRIO
+  const horarioOk =
+    !r.horario_inicio ||
+    (horaAtual >= r.horario_inicio && horaAtual <= r.horario_fim);
+
+  return diaOk && horarioOk;
+});
+
+      if (!r.horario_inicio || !r.horario_fim) return true;
+
+      return horaAtual >= r.horario_inicio && horaAtual <= r.horario_fim;
+    });
+
+    if (!permitido) {
+      resultado = 'negado';
+      motivo = 'area_negada';
+    }
+  }
+
+  // ============================================================
+  // 🔥 VALIDAÇÕES DE CREDENCIAL (SÓ SE AINDA ESTIVER LIBERADO)
+  // ============================================================
+
+  if (resultado === 'liberado') {
+
+    if (!credencial) {
+      resultado = 'negado';
+      motivo = 'sem_credencial';
+    }
+
+    else if (credencial.status !== 'ativa') {
+      resultado = 'negado';
+      motivo = 'bloqueada';
+    }
+
+    else if (credencial.validade) {
+
+      const hoje = new Date();
+      hoje.setHours(0,0,0,0);
+
+      const validade = new Date(credencial.validade);
+      validade.setHours(0,0,0,0);
+
+      if (validade < hoje) {
+        resultado = 'negado';
+        motivo = 'vencida';
+      }
+    }
+  }
+
+  // ============================================================
+  // 🔥 INSERE EVENTO (AGORA CORRETO)
+  // ============================================================
+
   const { error } = await sb
     .from('acessos')
     .insert({
       funcionario_id: func.id,
-      nome: func.nome,  // ⚠️ TODO: remover nome/setor e usar apenas funcionario_id (normalização)
-      setor: func.cargo,    // ⚠️ TODO: remover nome/setor e usar apenas funcionario_id (normalização)
+      nome: func.nome,
+      setor: func.cargo,
       catraca: `Catraca ${id}`,
       metodo: 'Manual',
-      tipo: 'entrada',
+      tipo: tipo,
       resultado: resultado,
       motivo: motivo,
       data: new Date().toISOString()
@@ -460,7 +602,6 @@ else if (credencial.validade) {
   }
 
   console.log(`🚪 Acesso ${resultado.toUpperCase()}`);
-
 }
 
 window.liberarCatraca = liberarCatraca;
