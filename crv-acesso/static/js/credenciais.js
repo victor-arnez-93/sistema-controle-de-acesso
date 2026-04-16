@@ -165,22 +165,44 @@ async function salvarCredencial() {
   if (!tipo) return alert('Selecione tipo');
 
   // 🔐 VALIDAÇÃO DE SENHA
-  if (tipo === 'senha') {
+if (tipo === 'senha') {
 
-    const senha = document.getElementById('cred-senha')?.value;
-    const conf  = document.getElementById('cred-senha-conf')?.value;
+  const senha = document.getElementById('cred-senha')?.value;
+  const conf  = document.getElementById('cred-senha-conf')?.value;
 
-    if (!senha || senha.length < 4) {
-      alert('Senha deve ter pelo menos 4 caracteres.');
-      return;
-    }
+  if (!senha || senha.length < 4) {
+    alert('Senha deve ter pelo menos 4 caracteres.');
+    return;
+  }
 
-    if (senha !== conf) {
-      alert('As senhas não coincidem.');
+  if (senha !== conf) {
+    alert('As senhas não coincidem.');
+    return;
+  }
+
+  // 🔐 GERA HASH
+  const senhaHashTemp = await gerarHash(senha);
+
+  // 🚨 VERIFICA DUPLICIDADE GLOBAL
+  const { data: existentes } = await sb
+    .from('credenciais')
+    .select('id')
+    .eq('senha_hash', senhaHashTemp)
+    .eq('ativo', true);
+
+  if (existentes && existentes.length > 0) {
+
+    if (
+      !credencialEditando ||
+      !existentes.find(e => e.id === credencialEditando)
+    ) {
+      alert('Já existe uma credencial ativa com essa senha.');
       return;
     }
 
   }
+
+}
 
   // 🚨 VALIDAÇÃO DE CARTÃO (CÓDIGO ÚNICO)
   if (tipo === 'cartao') {
@@ -207,6 +229,8 @@ if (existentes && existentes.length > 0) {
     alert('Já existe uma credencial ativa com esse código.');
     return;
   }
+
+}
 
 }
 
@@ -271,64 +295,6 @@ if (existentes && existentes.length > 0) {
 
 }
 
-  // 🔥 STATUS CORRETO (FORA DO OBJETO)
-  const status = document.getElementById('cred-status')?.value || 'ativa';
-
-  // 🔥 OBJETO LIMPO E CORRETO
-let senhaHash = null;
-
-if (tipo === 'senha') {
-  const senha = document.getElementById('cred-senha')?.value;
-  senhaHash = await gerarHash(senha);
-}
-
-const dados = {
-  funcionario_id: funcionarioId,
-  tipo,
-  codigo: document.getElementById('cred-num-cartao')?.value || null,
-  senha_hash: senhaHash,
-  ativo: status === 'ativa',
-  status: status
-};
-
-  // 🚨 BLOQUEAR DUPLICIDADE POR FUNCIONÁRIO + TIPO
-const { data: existenteFunc } = await sb
-  .from('credenciais')
-  .select('id')
-  .eq('funcionario_id', funcionarioId)
-  .eq('tipo', tipo)
-  .eq('ativo', true)
-  .maybeSingle();
-
-if (existenteFunc && existenteFunc.id !== credencialEditando) {
-  alert('Este funcionário já possui uma credencial ativa desse tipo.');
-  return;
-}
-
-  let response;
-
-  if (credencialEditando) {
-    response = await sb
-      .from('credenciais')
-      .update(dados)
-      .eq('id', credencialEditando);
-  } else {
-    response = await sb
-      .from('credenciais')
-      .insert([dados]);
-  }
-
-  if (response.error) {
-    alert(response.error.message);
-    return;
-  }
-
-  console.log('✅ Credencial salva');
-
-  fecharModal();
-  carregarCredenciais();
-
-}
 
 /* ============================================================
    FUNCIONÁRIOS SELECT
@@ -622,3 +588,4 @@ async function gerarHash(texto) {
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
+

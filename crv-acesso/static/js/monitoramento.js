@@ -152,6 +152,16 @@ function adicionarEvento(ev) {
 
   const hora = new Date(ev.data).toLocaleTimeString('pt-BR');
 
+  const motivosMap = {
+  sem_credencial: 'Sem credencial',
+  bloqueada: 'Credencial bloqueada',
+  vencida: 'Credencial vencida'
+};
+
+const motivoTexto = (ev.resultado === 'negado' && ev.motivo)
+  ? ` • ${motivosMap[ev.motivo] || ''}`
+  : '';
+
   const item = document.createElement('div');
   item.className = `feed-item ${ev.resultado}`;
 
@@ -173,11 +183,16 @@ function adicionarEvento(ev) {
       </div>
     </div>
 
-    <div class="feed-right">
-      <span class="feed-hora">${hora}</span>
-      ${badgeTipo(ev.tipo)}
-      ${badgeResultado(ev.resultado)}
-    </div>
+<div class="feed-right">
+  <span class="feed-hora">${hora}</span>
+
+  <div class="feed-badges">
+    ${badgeTipo(ev.tipo)}
+    ${badgeResultado(ev.resultado)}
+    ${badgeMotivo(ev)}
+  </div>
+
+</div>
   `;
 
   feedEl().prepend(item);
@@ -202,7 +217,7 @@ function atualizarUltimo(ev) {
     `${ev.catraca} · ${new Date(ev.data).toLocaleTimeString('pt-BR')}`;
 
   document.getElementById('last-badges').innerHTML =
-    `${badgeResultado(ev.resultado)} ${badgeTipo(ev.tipo)}`;
+    `${badgeResultado(ev.resultado)} ${badgeTipo(ev.tipo)} ${badgeMotivo(ev)}`;
 }
 
   function atualizarKPIs(lista) {
@@ -241,7 +256,14 @@ function atualizarUltimo(ev) {
 
           const ev = payload.new;
 
+        // 🔥 adiciona no cache
+          eventosCache.push(ev);
+
+        // 🔥 atualiza feed
           adicionarEvento(ev);
+
+        // 🔥 atualiza KPIs em tempo real
+          atualizarKPIs(eventosCache);
 
           if (!online) {
             window.syncCRV.adicionarFila('acessos', ev);
@@ -335,6 +357,19 @@ function togglePausa() {
     }[tipo] || '';
   }
 
+  function badgeMotivo(ev) {
+
+  if (ev.resultado !== 'negado' || !ev.motivo) return '';
+
+  const map = {
+    sem_credencial: 'Sem credencial',
+    bloqueada: 'Bloqueada',
+    vencida: 'Vencida'
+  };
+
+  return `<span class="badge badge-outline">${map[ev.motivo] || ''}</span>`;
+}
+
   function badgeTipo(tipo) {
     return tipo === 'entrada'
       ? '<span class="badge badge-info">Entrada</span>'
@@ -372,32 +407,36 @@ async function liberarCatraca(id) {
     .eq('ativo', true)
     .maybeSingle();
 
-  let resultado = 'liberado';
+ let resultado = 'liberado';
+ let motivo = null;
 
-  // 🚨 REGRA 1 — SEM CREDENCIAL
-  if (!credencial) {
+// 🚨 REGRA 1 — SEM CREDENCIAL
+if (!credencial) {
+  resultado = 'negado';
+  motivo = 'sem_credencial';
+}
+
+// 🚨 REGRA 2 — BLOQUEADA
+else if (credencial.status !== 'ativa') {
+  resultado = 'negado';
+  motivo = 'bloqueada';
+}
+
+// 🚨 REGRA 3 — VALIDADE
+else if (credencial.validade) {
+
+  const hoje = new Date();
+  hoje.setHours(0,0,0,0);
+
+  const validade = new Date(credencial.validade);
+  validade.setHours(0,0,0,0);
+
+  if (validade < hoje) {
     resultado = 'negado';
+    motivo = 'vencida';
   }
 
-  // 🚨 REGRA 2 — BLOQUEADA
-  else if (credencial.status !== 'ativa') {
-    resultado = 'negado';
-  }
-
-  // 🚨 REGRA 3 — VALIDADE
-  else if (credencial.validade) {
-
-    const hoje = new Date();
-    hoje.setHours(0,0,0,0);
-
-    const validade = new Date(credencial.validade);
-    validade.setHours(0,0,0,0);
-
-    if (validade < hoje) {
-      resultado = 'negado';
-    }
-
-  }
+}
 
   // 🔥 INSERE EVENTO
   const { error } = await sb
@@ -410,6 +449,7 @@ async function liberarCatraca(id) {
       metodo: 'Manual',
       tipo: 'entrada',
       resultado: resultado,
+      motivo: motivo,
       data: new Date().toISOString()
     });
 
