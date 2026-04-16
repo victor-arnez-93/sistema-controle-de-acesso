@@ -507,39 +507,6 @@ if (diaOk && horarioOk && grupoOk && areaOk) {
   }
 }
 
-  // 🔥 VALIDA DIA DA SEMANA
-  const hoje = new Date();
-  let diaAtual = hoje.getDay(); // 0 = domingo
-
-  diaAtual = diaAtual === 0 ? 7 : diaAtual; // transforma domingo em 7
-
-  let diasPermitidos = [];
-
-  try {
-    diasPermitidos = Array.isArray(r.dias_semana)
-      ? r.dias_semana
-      : JSON.parse(r.dias_semana || '[]');
-  } catch {
-    diasPermitidos = [];
-  }
-
-  const diaOk =
-    diasPermitidos.length === 0 ||
-    diasPermitidos.includes(diaAtual);
-
-  // 🔥 VALIDA HORÁRIO
-  const horarioOk =
-    !r.horario_inicio ||
-    (horaAtual >= r.horario_inicio && horaAtual <= r.horario_fim);
-
-  return diaOk && horarioOk;
-});
-
-      if (!r.horario_inicio || !r.horario_fim) return true;
-
-      return horaAtual >= r.horario_inicio && horaAtual <= r.horario_fim;
-    });
-
     if (!permitido) {
       resultado = 'negado';
       motivo = 'area_negada';
