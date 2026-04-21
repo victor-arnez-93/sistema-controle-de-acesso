@@ -480,6 +480,29 @@ def atualizar_empresa():
     print(f"[OK] Empresa salva/atualizada: {nome}")
     return jsonify({"ok": True})
 
+@app.route('/api/testar-equipamento', methods=['POST'])
+def testar_equipamento():
+
+    import requests
+
+    data = request.json
+    ip = data.get('ip')
+    porta = data.get('porta', 80)
+
+    try:
+        url = f'http://{ip}:{porta}'
+
+        r = requests.get(url, timeout=2)
+
+        return {
+            "status": "online"
+        }
+
+    except Exception:
+        return {
+            "status": "offline"
+        }
+
 # ════════════════════════════════════════════════════════════════════════════
 #  STATIC + SPA FALLBACK
 # ════════════════════════════════════════════════════════════════════════════

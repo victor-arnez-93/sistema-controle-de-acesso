@@ -265,7 +265,8 @@ function coletarDadosEquip() {
     nome:          document.getElementById('e-nome')?.value.trim()    || null,
     modelo:        document.getElementById('e-modelo')?.value.trim()  || null,
     serie:         document.getElementById('e-serie')?.value.trim()   || null,
-    local:         document.getElementById('e-local')?.value.trim()   || null,
+    local: document.getElementById('e-local')?.value || null,
+    localizacao: document.getElementById('e-local')?.value || null,
     ip:            document.getElementById('e-ip')?.value.trim()      || null,
     porta:         document.getElementById('e-porta')?.value.trim()   || '80',
     usuario:       document.getElementById('e-usuario')?.value.trim() || null,
@@ -441,7 +442,7 @@ function renderCardEquip(equip) {
     <div class="equip-card-body">
       <div class="equip-card-info-row">
         <i class="ph ph-map-pin"></i>
-        <span>${equip.local || '—'}</span>
+        <span>${equip.local || equip.localizacao || '—'}</span>
       </div>
       <div class="equip-card-info-row">
         <i class="ph ph-network"></i>

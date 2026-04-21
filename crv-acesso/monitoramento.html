@@ -108,6 +108,32 @@
         </div>
       </div>
 
+      <!-- MODAL LOGS -->
+
+<div id="logs-modal" class="user-modal-overlay rec-hidden">
+
+  <div class="user-modal">
+
+    <button class="user-modal-close" onclick="fecharLogs()">✕</button>
+
+    <div class="user-modal-header">
+      <div class="user-modal-avatar">
+        <i class="ph ph-list"></i>
+      </div>
+      <div>
+        <div class="user-modal-name" id="logs-titulo">Logs</div>
+        <div class="user-modal-email">Histórico do equipamento</div>
+      </div>
+    </div>
+
+    <div class="user-modal-body" id="logs-lista">
+      <!-- logs entram aqui -->
+    </div>
+
+  </div>
+
+</div>
+
       <!-- Painel direito -->
       <div class="monitor-side">
 
@@ -118,79 +144,7 @@
             <span class="badge badge-success" id="badge-catracas">4/4 Online</span>
           </div>
           <div class="monitor-catracas" id="monitor-catracas">
-
-            <div class="catraca-item" data-id="1">
-              <div class="catraca-info">
-                <span class="catraca-dot online"></span>
-                <div>
-                  <div class="catraca-nome">Portão Principal — Entrada</div>
-                  <div class="catraca-meta">Último evento: agora</div>
-                </div>
-              </div>
-              <div class="flex gap-1">
-                <button class="btn btn-ghost btn-sm btn-icon" title="Liberar passagem" onclick="liberarCatraca(1)">
-                  <i class="ph ph-door-open"></i>
-                </button>
-                <button class="btn btn-ghost btn-sm btn-icon" title="Ver logs">
-                  <i class="ph ph-list-magnifying-glass"></i>
-                </button>
-              </div>
-            </div>
-
-            <div class="catraca-item" data-id="2">
-              <div class="catraca-info">
-                <span class="catraca-dot online"></span>
-                <div>
-                  <div class="catraca-nome">Portão Principal — Saída</div>
-                  <div class="catraca-meta">Último evento: 2min atrás</div>
-                </div>
-              </div>
-              <div class="flex gap-1">
-                <button class="btn btn-ghost btn-sm btn-icon" title="Liberar passagem" onclick="liberarCatraca(2, 'saida')">
-                  <i class="ph ph-door-open"></i>
-                </button>
-                <button class="btn btn-ghost btn-sm btn-icon" title="Ver logs">
-                  <i class="ph ph-list-magnifying-glass"></i>
-                </button>
-              </div>
-            </div>
-
-            <div class="catraca-item" data-id="3">
-              <div class="catraca-info">
-                <span class="catraca-dot online"></span>
-                <div>
-                  <div class="catraca-nome">Portão Lateral A</div>
-                  <div class="catraca-meta">Último evento: 5min atrás</div>
-                </div>
-              </div>
-              <div class="flex gap-1">
-                <button class="btn btn-ghost btn-sm btn-icon" title="Liberar passagem" onclick="liberarCatraca(3, 'entrada')">
-                  <i class="ph ph-door-open"></i>
-                </button>
-                <button class="btn btn-ghost btn-sm btn-icon" title="Ver logs">
-                  <i class="ph ph-list-magnifying-glass"></i>
-                </button>
-              </div>
-            </div>
-
-            <div class="catraca-item" data-id="4">
-              <div class="catraca-info">
-                <span class="catraca-dot online"></span>
-                <div>
-                  <div class="catraca-nome">Portão Lateral B</div>
-                  <div class="catraca-meta">Último evento: 8min atrás</div>
-                </div>
-              </div>
-              <div class="flex gap-1">
-                <button class="btn btn-ghost btn-sm btn-icon" title="Liberar passagem" onclick="liberarCatraca(4, 'saida')">
-                  <i class="ph ph-door-open"></i>
-                </button>
-                <button class="btn btn-ghost btn-sm btn-icon" title="Ver logs">
-                  <i class="ph ph-list-magnifying-glass"></i>
-                </button>
-              </div>
-            </div>
-
+            <!-- gerado via JS -->
           </div>
         </div>
 

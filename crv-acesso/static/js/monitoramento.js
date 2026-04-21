@@ -17,24 +17,31 @@ const Monitoramento = (() => {
   let filtroAtual = 'todos';
   let realtimeChannel = null;
   let funcionariosCache = {};
+  let equipamentosCache = [];
 
   const feedEl = () => document.getElementById('monitor-feed');
 
-  async function init() {
-    try {
-      console.log('📡 Inicializando monitoramento...');
+async function init() {
+  try {
+    console.log('📡 Inicializando monitoramento...');
 
-      bindEventos();
-      atualizarStatusRede();
+    bindEventos();
+    atualizarStatusRede();
 
-      await carregarFuncionarios();
-      await carregarInicial();
-      iniciarRealtime();
+    await carregarFuncionarios();
+    await carregarEquipamentosCache();
+    await carregarInicial();
 
-    } catch (e) {
-      console.error('❌ Erro ao iniciar monitoramento:', e);
-    }
+    iniciarRealtime();
+
+    setInterval(() => {
+      carregarEquipamentosCache();
+    }, 10000);
+
+  } catch (e) {
+    console.error('❌ Erro ao iniciar monitoramento:', e);
   }
+}
 
   function bindEventos() {
     document.getElementById('btn-pausar').addEventListener('click', togglePausa);
@@ -105,6 +112,110 @@ const Monitoramento = (() => {
     console.error('Erro geral ao carregar funcionários', e);
   }
 }
+
+async function carregarEquipamentosCache() {
+
+  const sb = window.getSupabase();
+  if (!sb) return;
+
+  try {
+
+    const { data, error } = await sb
+      .from('equipamentos')
+      .select('id, nome, area_id, status, ip');
+
+    if (error) {
+      console.error('[MONITOR] erro ao carregar equipamentos', error);
+      return;
+    }
+
+    equipamentosCache = data || [];
+
+await Promise.all(
+  equipamentosCache.map(async eq => {
+    const online = await testarStatusEquipamento(eq);
+    eq.status = online ? 'online' : 'offline';
+  })
+);
+    renderizarCatracas();
+
+    console.log('🏢 Equipamentos carregados:', equipamentosCache);
+
+  } catch (e) {
+    console.error('Erro geral ao carregar equipamentos', e);
+  }
+}
+
+function renderizarCatracas() {
+
+  const container = document.getElementById('monitor-catracas');
+  if (!container) return;
+
+  container.innerHTML = '';
+
+  equipamentosCache.forEach(eq => {
+
+    const isOnline = eq.status === 'online';
+    const statusClass = isOnline ? 'online' : 'offline';
+
+    const div = document.createElement('div');
+    div.className = 'catraca-item';
+
+    div.innerHTML = `
+      <div class="catraca-info">
+        <span class="catraca-dot ${statusClass}"></span>
+        <div>
+          <div class="catraca-nome" onclick="filtrarPorEquip('${eq.nome}')">
+            ${eq.nome}
+          </div>
+          <div class="catraca-meta">
+            ${isOnline ? 'Online' : 'Offline'}
+          </div>
+        </div>
+      </div>
+
+      <div class="flex gap-1">
+
+        <button class="btn btn-ghost btn-sm btn-icon"
+          title="Entrada"
+          ${isOnline ? `onclick="liberarCatraca('${eq.id}', 'entrada')"` : 'disabled title="Equipamento offline"'}>
+          <i class="ph ph-arrow-right"></i>
+        </button>
+
+        <button class="btn btn-ghost btn-sm btn-icon"
+          title="Saída"
+          ${isOnline ? `onclick="liberarCatraca('${eq.id}', 'entrada')"` : 'disabled title="Equipamento offline"'}>
+          <i class="ph ph-arrow-left"></i>
+        </button>
+
+        <button class="btn btn-ghost btn-sm btn-icon"
+          title="Logs"
+          onclick="verLogsEquip('${eq.id}')">
+          <i class="ph ph-list-magnifying-glass"></i>
+        </button>
+
+      </div>
+    `;
+
+    container.appendChild(div);
+
+  });
+
+  // 🔥 badge FORA do loop (correto)
+  const badge = document.getElementById('badge-catracas');
+
+  if (badge) {
+    const total = equipamentosCache.length;
+    const online = equipamentosCache.filter(e => e.status === 'online').length;
+
+    badge.textContent = `${online}/${total} Online`;
+  }
+
+}
+
+window.obterEquipamentoPorId = function (idEquipamento) {
+  return equipamentosCache.find(e => e.id === idEquipamento);
+};
 
   function renderFeed(lista) {
     const feed = feedEl();
@@ -199,6 +310,19 @@ const motivoTexto = (ev.resultado === 'negado' && ev.motivo)
 
   limitarFeed();
   atualizarUltimo(ev);
+
+  const itens = document.querySelectorAll('.catraca-item');
+
+itens.forEach(item => {
+  const nome = item.querySelector('.catraca-nome')?.textContent;
+
+  if (nome === ev.catraca) {
+    const meta = item.querySelector('.catraca-meta');
+    if (meta) {
+      meta.textContent = `${ev.nome} • ${ev.tipo} • ${new Date(ev.data).toLocaleTimeString()}`;
+    }
+  }
+});
 }
 
 function atualizarUltimo(ev) {
@@ -255,9 +379,6 @@ function atualizarUltimo(ev) {
           console.log('📡 Evento recebido:', payload);
 
           const ev = payload.new;
-
-        // 🔥 adiciona no cache
-          eventosCache.push(ev);
 
         // 🔥 atualiza feed
           adicionarEvento(ev);
@@ -399,7 +520,7 @@ async function liberarCatraca(id, tipo = 'entrada') {
   // 🔥 BUSCA UM FUNCIONÁRIO REAL
   const { data: funcs, error: funcError } = await sb
     .from('funcionarios')
-    .select('id, nome, cargo')
+    .select('id, nome, cargo, grupo_id')
     .limit(1);
 
   if (funcError || !funcs || funcs.length === 0) {
@@ -423,11 +544,11 @@ async function liberarCatraca(id, tipo = 'entrada') {
   let motivo = null;
 
 // 🔥 BUSCAR EQUIPAMENTO REAL
-const { data: equipamento } = await sb
-  .from('equipamentos')
-  .select('id, nome, area_id')
-  .eq('id', id)
-  .maybeSingle();
+const equipamento = obterEquipamentoPorId(id);
+
+if (!equipamento) {
+  console.warn('[MONITOR] equipamento não encontrado no cache');
+}
 
 const areaAtual = equipamento?.area_id || null;
 
@@ -554,7 +675,7 @@ if (diaOk && horarioOk && grupoOk && areaOk) {
       funcionario_id: func.id,
       nome: func.nome,
       setor: func.cargo,
-      catraca: `Catraca ${id}`,
+      catraca: equipamento?.nome || `Catraca ${id}`,
       metodo: 'Manual',
       tipo: tipo,
       resultado: resultado,
@@ -571,4 +692,88 @@ if (diaOk && horarioOk && grupoOk && areaOk) {
   console.log(`🚪 Acesso ${resultado.toUpperCase()}`);
 }
 
+async function testarStatusEquipamento(eq) {
+
+  try {
+
+    const resp = await fetch('/api/testar-equipamento', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        ip: eq.ip,
+        porta: eq.porta || 80
+      })
+    });
+
+    const data = await resp.json();
+
+    return data.status === 'online';
+
+  } catch (e) {
+    console.error('Erro teste equipamento', e);
+    return false;
+  }
+}
+
 window.liberarCatraca = liberarCatraca;
+
+window.verLogsEquip = async function (idEquipamento) {
+
+  const sb = window.getSupabase();
+  if (!sb) return;
+
+  try {
+
+    const eq = obterEquipamentoPorId(idEquipamento);
+
+    const { data, error } = await sb
+      .from('acessos')
+      .select('*')
+      .eq('catraca', eq?.nome)
+      .order('data', { ascending: false })
+      .limit(20);
+
+    if (error) {
+      console.error(error);
+      alert('Erro ao buscar logs');
+      return;
+    }
+
+    document.getElementById('logs-titulo').textContent = `Logs - ${eq.nome}`;
+
+    const lista = document.getElementById('logs-lista');
+    lista.innerHTML = '';
+
+    data.forEach(ev => {
+
+      const div = document.createElement('div');
+      div.className = 'logs-item';
+
+        div.innerHTML = `
+          <div class="logs-nome">${ev.nome}</div>
+          <div class="logs-meta">
+            ${ev.tipo.toUpperCase()} • ${ev.resultado.toUpperCase()}
+          </div>
+          <div class="logs-data">
+            ${new Date(ev.data).toLocaleString()}
+          </div>
+        `;
+
+      lista.appendChild(div);
+
+    });
+
+    document.getElementById('logs-modal').classList.remove('rec-hidden');
+
+  } catch (e) {
+    console.error(e);
+    alert('Erro geral ao buscar logs');
+  }
+
+};
+
+window.fecharLogs = function () {
+  document.getElementById('logs-modal').classList.add('rec-hidden');
+};
